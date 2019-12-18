@@ -1,32 +1,110 @@
 
+(cell, int, int) load_data() {
+    slice data = get_data().begin_parse();
+    cell round = data~load_ref();
+    int seqno = data~load_uint(32);
+    int owner = data~load_uint(256);
+    data.end_parse();
+    return (round, seqno, owner);
+}
+
+() save_data(cell round, int seqno, int owner) impure {
+    set_data(begin_cell()
+        .store_ref(round)
+        .store_uint(seqno, 32)
+        .store_uint(owner, 256)
+        .end_cell());    
+}
+
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
     var cs = in_msg_cell.begin_parse();
     var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
     var s_addr = cs~load_msg_addr();
 
+    if ((flags & 1) | in_msg.slice_empty?()) {
+        ;; a bounced message, or a simple transfer
+        return ();
+    }
+
     int op = in_msg~load_uint(32);
 
     if (op == 1) {
         ;; add new ticket
-        var (participants) = load_data();
 
         var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
 
+        var (round, seqno, owner) = load_data();
+
+        slice roundS = round.begin_cell()
+        var (prize_fund, participants) = (roundS~load_grams(64), roundS~load_dict());
+        roundS.end_parse()
+
         var nums = begin_cell()
-            .store_uint8(n1)
-            .store_uint8(n2)
-            .store_uint8(n3)
+            .store_uint(n1, 8)
+            .store_uint(n2, 8)
+            .store_uint(n3, 8)
+            .end_cell();
 
-        participants~udict_add(256, s_addr, nums);
+        participants~udict_set(256, s_addr, nums);
 
-        store_data(participants);
+        round = begin_cell()
+            .store_grams(prize_fund + msg_value)
+            .stroe_dict(participants)
+            .end_cell();
+
+        save_data(round, seqno, owner);
     }
+
+    if (op == 2) {
+        ;; inc prize fund
+
+        var (round, seqno, owner) = load_data();
+
+        slice roundS = round.begin_cell()
+        var (prize_fund, participants) = (roundS~load_grams(), roundS~load_dict());
+        roundS.end_parse()
+
+        round = begin_cell()
+            .store_grams(prize_fund + msg_value)
+            .stroe_dict(participants)
+            .end_cell();
+
+        save_data(round, seqno, owner);
+    }
+
+    ;; if op is non-zero and its higher bit is zero, throw an exception (the message is an unsupported query) to
+    ;; bounce message back to sender
+    throw_unless(37, (op == 0) | (op & (1 << 31)));
+    ;; do nothing for other internal messages    
 }
 
 () recv_external(slice in_msg) impure {
+    var signature = in_msg~load_bits(512);
+    var cs = in_msg;
+    var (msg_seqno, valid_until, op) = (cs~load_uint(32), cs~load_uint(32), cs~load_uint(32));
+    throw_if(35, valid_until <= now());
+    var (round, seqno, owner) = load_data();
+    throw_unless(33, msg_seqno == seqno);
+    throw_unless(34, check_signature(slice_hash(in_msg), signature, owner));
+    accept_message();
+    if (op == 1) {
+        cs~touch();
+        while (cs.slice_refs()) {
+            var mode = cs~load_uint(8);
+            send_raw_message(cs~load_ref(), mode);
+        }
+        cs.end_parse();
+    }
+    save_data(round, seqno + 1, owner);
 }
 
 ;; Get methods
 
 int seqno() method_id {
+    return get_data().begin_parse().skip_ref().preload_unit(32);
+}
+
+int prize_fund() method_id {
+    cell round = get_data().begin_parse().preload_ref();
+    return round.begin_parse().preload_grams();
 }
