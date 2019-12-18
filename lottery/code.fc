@@ -1,0 +1,32 @@
+
+() recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
+    var cs = in_msg_cell.begin_parse();
+    var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+    var s_addr = cs~load_msg_addr();
+
+    int op = in_msg~load_uint(32);
+
+    if (op == 1) {
+        ;; add new ticket
+        var (participants) = load_data();
+
+        var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
+
+        var nums = begin_cell()
+            .store_uint8(n1)
+            .store_uint8(n2)
+            .store_uint8(n3)
+
+        participants~udict_add(256, s_addr, nums);
+
+        store_data(participants);
+    }
+}
+
+() recv_external(slice in_msg) impure {
+}
+
+;; Get methods
+
+int seqno() method_id {
+}
