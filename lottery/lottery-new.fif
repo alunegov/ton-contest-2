@@ -1,0 +1,40 @@
+"TonUtil.fif" include
+"Asm.fif" include
+
+{ ."usage: " @' $0 type ." <workchain-id> [<filename-base>]" cr
+  ."Creates a new lottery in specified workchain, with private key saved to or loaded from <filename-base>.pk" cr
+  ."('lottery.pk' by default)" cr 1 halt
+} : usage
+$# 1- -2 and ' usage if
+
+$1 parse-workchain-id =: wc // set workchain id from command line argument
+def? $2 { @' $2 } { "lottery" } cond constant file-base
+
+."Creating new lottery in workchain " wc . cr
+
+"code.fif" include // code
+<b false 1 i, // round
+  0 32 u, // seqno
+  file-base +".pk" load-generate-keypair constant lottery_pk B, // owner pubkey
+b> // data
+null // no libs
+<b b{0011} s, 3 roll ref, rot ref, swap dict, b>  // create StateInit
+dup ."StateInit: " <s csr. cr
+dup hashu wc swap 2dup 2constant lottery_addr
+
+."new lottery address = " 2dup .addr cr
+2dup file-base +".addr" save-address-verbose
+."Non-bounceable address (for init): " 2dup 7 .Addr cr
+."Bounceable address (for later access): " 6 .Addr cr
+
+// msg_seqno, valid_until, op
+<b 0 32 u, -1 32 i, 9 32 u, b>
+dup ."signing message: " <s csr. cr
+dup hashu lottery_pk ed25519_sign_uint rot
+
+<b b{1000100} s, lottery_addr addr, 0 Gram, b{10} s, swap <s s, b{0} s, swap B, swap <s s, b>
+dup ."External message for initialization is " <s csr. cr
+
+2 boc+>B dup Bx. cr
+file-base +"-query.boc" tuck B>file
+."(Saved lottery creating query to file " type .")" cr

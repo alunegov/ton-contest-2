@@ -1,0 +1,208 @@
+// automatically generated from `/mnt/c/Work3/ton/crypto/smartcont/stdlib.fc` `code.fc` 
+PROGRAM{
+  DECLPROC load_data
+  DECLPROC save_data
+  DECLPROC unpack_round
+  DECLPROC pack_round
+  DECLPROC recv_internal
+  DECLPROC recv_external
+  85143 DECLMETHOD seqno
+  79045 DECLMETHOD prize_fund
+  load_data PROC:<{
+    // 
+    c4 PUSH	//  _1
+    CTOS	//  data
+    LDDICT	//  round data
+    32 LDU	//  round seqno data
+    256 LDU	//  round seqno owner data
+    ENDS
+  }>
+  save_data PROC:<{
+    //  round seqno owner
+    NEWC	//  round seqno owner _3
+    s1 s3 XCHG	//  owner seqno round _3
+    STDICT	//  owner seqno _4
+    32 STU	//  owner _6
+    256 STU	//  _8
+    ENDC	//  _9
+    c4 POP
+  }>
+  unpack_round PROC:<{
+    //  round
+    CTOS	//  rs
+    LDGRAMS	//  _4 rs
+    LDDICT	//  res res rs
+    ENDS
+  }>
+  pack_round PROC:<{
+    //  prize_fund participants
+    NEWC	//  prize_fund participants _2
+    ROT	//  participants _2 prize_fund
+    STGRAMS	//  participants _3
+    STDICT	//  _4
+    ENDC	//  _5
+  }>
+  recv_internal PROC:<{
+    //  msg_value in_msg_cell in_msg
+    SWAP	//  msg_value in_msg in_msg_cell
+    CTOS	//  msg_value in_msg cs
+    4 LDU	//  msg_value in_msg flags cs
+    LDMSGADDR	//  msg_value in_msg flags _88 _87
+    DROP	//  msg_value in_msg flags s_addr
+    SWAP
+    1 PUSHINT	//  msg_value in_msg s_addr flags _12=1
+    AND	//  msg_value in_msg s_addr _13
+    s2 PUSH	//  msg_value in_msg s_addr _13 in_msg
+    SEMPTY	//  msg_value in_msg s_addr _13 _14
+    OR	//  msg_value in_msg s_addr _15
+    IFJMP:<{	//  msg_value in_msg s_addr
+      3 BLKDROP	// 
+    }>	//  msg_value in_msg s_addr
+    SWAP	//  msg_value s_addr in_msg
+    32 LDU	//  msg_value s_addr op in_msg
+    OVER	//  msg_value s_addr op in_msg op
+    1 EQINT	//  msg_value s_addr op in_msg _21
+    IFJMP:<{	//  msg_value s_addr op in_msg
+      NIP	//  msg_value s_addr in_msg
+      SWAP	//  msg_value in_msg s_addr
+      REWRITESTDADDR	//  msg_value in_msg _91 _92
+      NIP	//  msg_value in_msg addr
+      SWAP	//  msg_value addr in_msg
+      8 LDU	//  msg_value addr _28 in_msg
+      8 LDU	//  msg_value addr _28 _31 in_msg
+      8 LDU	//  msg_value addr _28 _31 _98 _97
+      DROP	//  msg_value addr n1 n2 n3
+      load_data CALLDICT	//  msg_value addr n1 n2 n3 round seqno owner
+      NEWC	//  msg_value addr n1 n2 n3 round seqno owner _42
+      s1 s6 XCHG	//  msg_value addr owner n2 n3 round seqno n1 _42
+      8 STU	//  msg_value addr owner n2 n3 round seqno _44
+      s1 s4 XCHG	//  msg_value addr owner seqno n3 round n2 _44
+      8 STU	//  msg_value addr owner seqno n3 round _46
+      s1 s2 XCHG	//  msg_value addr owner seqno round n3 _46
+      8 STU	//  msg_value addr owner seqno round nums
+      0 PUSHINT	//  msg_value addr owner seqno round nums prize_fund=0
+      NEWDICT	//  msg_value addr owner seqno round nums prize_fund=0 participants
+      s3 PUSH	//  msg_value addr owner seqno round nums prize_fund=0 participants round
+      ISNULL	//  msg_value addr owner seqno round nums prize_fund=0 participants _53
+      IFNOT:<{	//  msg_value addr owner seqno round nums prize_fund=0 participants
+        2DROP	//  msg_value addr owner seqno round nums
+        SWAP	//  msg_value addr owner seqno nums round
+        unpack_round CALLDICT	//  msg_value addr owner seqno nums prize_fund participants
+      }>ELSE<{
+        3 ROLL
+        DROP	//  msg_value addr owner seqno nums prize_fund participants
+      }>
+      s1 s5 XCHG
+      8 PUSHPOW2	//  msg_value prize_fund owner seqno nums addr participants _56=256
+      DICTUSETB	//  msg_value prize_fund owner seqno participants
+      s3 s4 XCHG2	//  participants seqno owner prize_fund msg_value
+      ADD	//  participants seqno owner _58
+      s0 s3 XCHG2	//  owner seqno _58 participants
+      pack_round CALLDICT	//  owner seqno round
+      s0 s2 XCHG	//  round seqno owner
+      save_data CALLDICT
+    }>	//  msg_value s_addr op in_msg
+    DROP
+    NIP	//  msg_value op
+    DUP	//  msg_value op op
+    2 EQINT	//  msg_value op _62
+    IFJMP:<{	//  msg_value op
+      DROP	//  msg_value
+      load_data CALLDICT	//  msg_value round seqno owner
+      s2 PUSH	//  msg_value round seqno owner round
+      ISNULL	//  msg_value round seqno owner _67
+      IF:<{	//  msg_value round seqno owner
+        s2 POP	//  msg_value owner seqno
+        NEWDICT	//  msg_value owner seqno _73
+        s1 s3 XCHG	//  seqno owner msg_value _73
+        pack_round CALLDICT	//  seqno owner round
+      }>ELSE<{	//  msg_value round seqno owner
+        s0 s2 XCHG	//  msg_value owner seqno round
+        unpack_round CALLDICT	//  msg_value owner seqno prize_fund participants
+        s0 s4 XCHG	//  participants owner seqno prize_fund msg_value
+        ADD	//  participants owner seqno _71
+        s0 s3 XCHG2	//  seqno owner _71 participants
+        pack_round CALLDICT	//  seqno owner round
+      }>
+      -ROT	//  round seqno owner
+      save_data CALLDICT
+    }>	//  msg_value op
+    NIP	//  op
+    DUP	//  op op
+    0 EQINT	//  op _78
+    SWAP
+    31 PUSHPOW2	//  _78 op _81
+    AND	//  _78 _82
+    OR	//  _83
+    37 THROWIFNOT
+  }>
+  recv_external PROC:<{
+    //  in_msg
+    9 PUSHPOW2	//  in_msg _3=512
+    LDSLICEX	//  signature in_msg
+    DUP	//  signature in_msg cs
+    32 LDU	//  signature in_msg _9 cs
+    32 LDU	//  signature in_msg _9 _12 cs
+    32 LDU	//  signature in_msg msg_seqno valid_until op cs
+    NOW	//  signature in_msg msg_seqno valid_until op cs _19
+    s1 s3 XCHG	//  signature in_msg msg_seqno cs op valid_until _19
+    LEQ	//  signature in_msg msg_seqno cs op _20
+    35 THROWIF
+    load_data CALLDICT	//  signature in_msg msg_seqno cs op round seqno owner
+    s5 s1 XCPU	//  signature in_msg owner cs op round seqno msg_seqno seqno
+    EQUAL	//  signature in_msg owner cs op round seqno _27
+    33 THROWIFNOT
+    s0 s5 XCHG	//  signature seqno owner cs op round in_msg
+    HASHSU	//  signature seqno owner cs op round _30
+    s0 s6 s4 XC2PU	//  round seqno owner cs op _30 signature owner
+    CHKSIGNU	//  round seqno owner cs op _31
+    34 THROWIFNOT
+    ACCEPT
+    DUP	//  round seqno owner cs op op
+    1 EQINT	//  round seqno owner cs op _35
+    IF:<{	//  round seqno owner cs op
+      DROP	//  round seqno owner cs
+      WHILE:<{
+        DUP	//  round seqno owner cs cs
+        SREFS	//  round seqno owner cs _38
+      }>DO<{	//  round seqno owner cs
+        8 LDU	//  round seqno owner mode cs
+        LDREF	//  round seqno owner mode _43 cs
+        s0 s2 XCHG	//  round seqno owner cs _43 mode
+        SENDRAWMSG
+      }>	//  round seqno owner cs
+      ENDS
+    }>ELSE<{	//  round seqno owner cs op
+      NIP	//  round seqno owner op
+      9 EQINT	//  round seqno owner _49
+      40 THROWIFNOT
+    }>
+    SWAP	//  round owner seqno
+    INC	//  round owner _52
+    SWAP	//  round _52 owner
+    save_data CALLDICT
+  }>
+  seqno PROC:<{
+    // 
+    c4 PUSH	//  _0
+    CTOS	//  _1
+    SKIPDICT	//  _2
+    32 PLDU	//  _4
+  }>
+  prize_fund PROC:<{
+    // 
+    c4 PUSH	//  _1
+    CTOS	//  _2
+    PLDDICT	//  round
+    DUP	//  round round
+    ISNULL	//  round _4
+    IF:<{	//  round
+      DROP	// 
+      0 PUSHINT	//  _5=0
+    }>ELSE<{	//  round
+      CTOS	//  _7
+      LDGRAMS
+      DROP	//  _5
+    }>
+  }>
+}END>c

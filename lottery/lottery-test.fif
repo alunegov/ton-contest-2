@@ -1,0 +1,77 @@
+"TonUtil.fif" include
+"Asm.fif" include
+
+"code.fif" include <s constant code
+
+<b false 1 i, // round
+  0 32 u, // seqno
+  "lottery.pk" load-generate-keypair constant lottery_pk B, // owner pubkey
+b> constant storage
+
+"lottery.addr" load-address-verbose 2constant lottery_addr
+
+// addr_std
+<b b{100} s, lottery_addr addr, b> <s =: contract_address_full
+
+0 tuple 0x076ef1ea , // magic
+0 , 0 , // actions msg_sents
+now , // unix_time
+1 , 1 , 0 , // block_lt, trans_lt, rand_seed
+0 tuple 9223372036854775807 , dictnew , , // remaining balance
+contract_address_full , dictnew , // contract_address, global_config
+1 tuple // wrap to another tuple
+constant c7
+
+."prize_fund" cr
+79045 code storage c7 runvmctx
+constant updated_storage2
+constant exit_code
+."Exit code " exit_code . cr
+."Updated storage: " cr updated_storage2 <s csr. cr
+exit_code abort"FAIL exit_code"
+."r1: " dup constant r1 . cr
+exit_code abort"FAIL exit_code"
+r1 0 = not abort"FAIL r1"
+
+."inc prize_fund" cr
+100 <b b{0000} s, b{100} s, lottery_addr addr, b> <b 2 32 u, b> <s
+recv_internal code storage c7 runvmctx
+constant updated_storage
+constant exit_code
+."Exit code " exit_code . cr
+."Updated storage: " cr updated_storage <s csr. cr
+exit_code abort"FAIL exit_code"
+
+."prize_fund" cr
+79045 code updated_storage c7 runvmctx
+constant updated_storage2
+constant exit_code
+."Exit code " exit_code . cr
+."Updated storage: " cr updated_storage2 <s csr. cr
+exit_code abort"FAIL exit_code"
+."r1: " dup constant r1 . cr
+exit_code abort"FAIL exit_code"
+r1 100 = not abort"FAIL r1"
+
+."buy ticket" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+1 <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 13 8 u, 12 8 u, 79 8 u, b> <s
+recv_internal code updated_storage c7 runvmctx
+constant updated_storage
+constant exit_code
+."Exit code " exit_code . cr
+."Updated storage: " cr updated_storage <s csr. cr
+exit_code abort"FAIL exit_code"
+
+."buy ticket" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+1 <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 13 8 u, 12 8 u, 79 8 u, b> <s
+recv_internal code updated_storage c7 runvmctx
+constant updated_storage
+constant exit_code
+."Exit code " exit_code . cr
+."Updated storage: " cr updated_storage <s csr. cr
+exit_code abort"FAIL exit_code"
+
+lottery_addr .addr cr
+lottery_addr 6 .Addr cr
