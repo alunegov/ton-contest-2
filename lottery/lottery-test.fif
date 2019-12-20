@@ -23,19 +23,22 @@ contract_address_full , dictnew , // contract_address, global_config
 1 tuple // wrap to another tuple
 constant c7
 
-."prize_fund" cr
-79045 code storage c7 runvmctx
-constant storage
-constant exit_code
-."Exit code " exit_code . cr
-."Updated storage: " cr storage <s csr. cr
-exit_code abort"FAIL exit_code"
-."r1: " dup constant r1 . cr
-exit_code abort"FAIL exit_code"
-r1 0 = not abort"FAIL r1"
+// storage exp_prize_find - 
+{
+."expecting prize_fund " dup . cr
+79045 code 3 roll c7 runvmctx
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+."r1: " dup . cr
+= not abort"FAIL r1"
+} : check_prize_fund
+
+storage 0 check_prize_fund
 
 ."inc prize_fund" cr
-100 <b b{0000} s, b{100} s, lottery_addr addr, b> <b 2 32 u, b> <s
+98 <b b{0000} s, b{100} s, lottery_addr addr, b> <b 2 32 u, b> <s
 recv_internal code storage c7 runvmctx
 constant storage
 constant exit_code
@@ -43,20 +46,11 @@ constant exit_code
 ."Updated storage: " cr storage <s csr. cr
 exit_code abort"FAIL exit_code"
 
-."prize_fund" cr
-79045 code storage c7 runvmctx
-constant storage
-constant exit_code
-."Exit code " exit_code . cr
-."Updated storage: " cr storage <s csr. cr
-exit_code abort"FAIL exit_code"
-."r1: " dup constant r1 . cr
-exit_code abort"FAIL exit_code"
-r1 100 = not abort"FAIL r1"
+storage 98 check_prize_fund
 
-."buy ticket" cr
+."buy ticket p1" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0 32 u, 13 8 u, 12 8 u, 79 8 u, b> <s
+1 <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0 32 u, 11 8 u, 12 8 u, 79 8 u, b> <s
 recv_internal code storage c7 runvmctx
 constant storage
 constant exit_code
@@ -64,15 +58,36 @@ constant exit_code
 ."Updated storage: " cr storage <s csr. cr
 exit_code abort"FAIL exit_code"
 
-."buy ticket" cr
+."buy ticket p2" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0 32 u, 22 8 u, 03 8 u, 91 8 u, b> <s
+1 <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0 32 u, 7 8 u, 1 8 u, 2 8 u, b> <s
 recv_internal code storage c7 runvmctx
 constant storage
 constant exit_code
 ."Exit code " exit_code . cr
 ."Updated storage: " cr storage <s csr. cr
 exit_code abort"FAIL exit_code"
+
+storage 100 check_prize_fund
+
+."lucky_nums2" cr
+77502 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+."r1: " <s csr. cr
+
+."winners" cr
+128887 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+{ drop } 3 times
+{ ."r: " . cr } 3 times
 
 ."conduct round" cr
 // msg_seqno, valid_until, op
@@ -86,5 +101,46 @@ constant exit_code
 ."Updated storage: " cr storage <s csr. cr
 exit_code abort"FAIL exit_code"
 
+// storage 37 check_prize_fund
+
+."lucky_nums2" cr
+77502 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+."r1: " <s csr. cr
+
+."winners" cr
+128887 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+{ drop } 3 times
+{ ."r: " . cr } 3 times
+
+."is_winner 1" cr
+1
+118635 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+."r1: " . cr
+
+."is_winner 2" cr
+2
+118635 code storage c7 runvmctx
+.s cr
+// ."Updated storage: " cr <s csr. cr
+drop
+."Exit code " dup . cr
+abort"FAIL exit_code"
+."r1: " . cr
+
 lottery_addr .addr cr
-lottery_addr 6 .Addr cr
+// lottery_addr 6 .Addr cr
