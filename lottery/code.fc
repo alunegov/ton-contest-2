@@ -85,8 +85,16 @@ cell pack_round(int id, int prize_fund, cell participants) {
         }
     } while (~f);
 
+    int p3 = 0.60 * prize_fund;
+    int p2 = 0.20 * prize_fund;
+    int p1 = 0.17 * prize_fund;
+    int commision = 0.03 * prize_fund;
+
     old_round = begin_cell()
         .store_dict(lucky_nums)
+        .store_grams(p1 / c1)
+        .store_grams(p2 / c2)
+        .store_grams(p3 / c3)
         .store_dict(d1)
         .store_dict(d2)
         .store_dict(d3)
@@ -179,6 +187,8 @@ cell pack_round(int id, int prize_fund, cell participants) {
         ;; conduct round
         cs.end_parse();
         (round, old_round) = conduct_round(round);
+    } else if (op == 3) {
+        ;; get commision
     } else {
         ;; 9 - op for init
         cs.end_parse();
@@ -203,12 +213,13 @@ cell lucky_nums() method_id {
     return old_round.null?() ? nil : old_round.begin_parse().preload_dict();
 }
 
-(cell, cell, cell) winners() method_id {
+(int, int, int, cell, cell, cell) winners() method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {
         return nil;
     }
     old_round_s = old_round.begin_parse().skip_dict();
+    var (pf1, pf2, pf3) = (old_round_s~load_grams(), old_round_s~load_grams(), old_round_s~load_grams());
     var (d1, d2, d3) = (old_round_s~load_dict(), old_round_s~load_dict(), old_round_s~load_dict());
-    return (d1, d2, d3);
+    return (pf1, pf2, pf3, d1, d2, d3);
 }
