@@ -1,35 +1,100 @@
 
 int preload_grams(slice s) asm "LDGRAMS" "DROP";
 
-(cell, int, int) load_data() {
-    slice data = get_data().begin_parse();
-    cell round = data~load_dict();
-    int seqno = data~load_uint(32);
-    int owner = data~load_uint(256);
-    data.end_parse();
-    return (round, seqno, owner);
+;; round, old_round, seqno, owner
+() load_data() {
+    slice data_s = get_data().begin_parse();
+    var res = (data_s~load_dict(), data_s~load_dict(), data_s~load_uint(32), data_s~load_uint(256));
+    data_s.end_parse();
+    return res;
 }
 
-() save_data(cell round, int seqno, int owner) impure {
+() save_data(cell round, cell old_round, int seqno, int owner) impure {
     set_data(begin_cell()
         .store_dict(round)
+        .store_dict(old_round)
         .store_uint(seqno, 32)
         .store_uint(owner, 256)
         .end_cell());    
 }
 
+;; id, prize_fund, participants
 _ unpack_round(cell round) {
-    var rs = round.begin_parse();
-    var res = (rs~load_grams(), rs~load_dict());
+    if (round.null?) {
+        return (0, new_dict())
+    }
+    var round_s = round.begin_parse();
+    var res = (round_s~load_uint(32), round_s~load_grams(), round_s~load_dict());
     rs.end_parse();
     return res;
 }
 
-cell pack_round(int prize_fund, cell participants) {
+cell pack_round(int id, int prize_fund, cell participants) {
     return begin_cell()
+        .store_uint(id, 32)
         .store_grams(prize_fund)
         .store_dict(participants)
         .end_cell();
+}
+
+(cell, cell) conduct_round(cell round) {
+    var (id, prize_fund, participants) = unpack_round(round);
+
+    randomize_lt();
+
+    lucky_nums = new_dict();
+    int i = 0;
+    while (i < 13) {
+        var (lucky_nums', f) = lucky_nums~udict_add_builder?(8, rand(99), begin_cell());
+        if (f) {
+            lucky_nums = lucky_nums';
+            i++;
+        }
+    }
+
+    int c1 = 0;
+    int c2 = 0;
+    int c3 = 0;
+
+    cell d1 = new_dict();
+    cell d2 = new_dict();
+    cell d3 = new_dict();
+
+    int i = -1;
+    do {
+        (i, var nums, var f) = participants.udict_get_next?(256, i);
+
+        nums_s = nums.begin_parse();
+        var (n1, n2, n3) = (nums_s.load_uint(8), nums_s.load_uint(8), nums_s.load_uint(8));
+        nums_s.end_parse();
+
+        var (_, f1) = lucky_nums.udict_get?(8, n1);
+        var (_, f2) = lucky_nums.udict_get?(8, n2);
+        var (_, f3) = lucky_nums.udict_get?(8, n3);
+
+        ff = f1 + f2 + f3;
+        if (ff = 3) {
+            c3++;
+            d3~udict_set_builder(256, i, begin_cell());
+        } else if (ff == 2) {
+            c2++;
+            d2~udict_set_builder(256, i, begin_cell());
+        } else if (ff == 1) {
+            c1++;
+            d1~udict_set_builder(256, i, begin_cell());
+        }
+    } while (~f);
+
+    old_round = begin_cell()
+        .store_dict(lucky_nums)
+        .store_dict(d1)
+        .store_dict(d2)
+        .store_dict(d3)
+        .end_cell();
+
+    round = pack_round(id + 1, 0, new_dict());
+
+    return (round, old_round);
 }
 
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
@@ -50,43 +115,39 @@ cell pack_round(int prize_fund, cell participants) {
         ;;throw_unless(39, wc == 0);
         ;;throw_unless(40, addr == 1);
 
+        var msg_round_id = in_msg~load_uint(32);
         var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
+        in_msg.end_parse();
 
-        var (round, seqno, owner) = load_data();
+        var (id, round, old_round, seqno, owner) = load_data();
+
+        throw_unless(39, msg_round_id == id);  ;; send_back
 
         var nums = begin_cell()
             .store_uint(n1, 8)
             .store_uint(n2, 8)
             .store_uint(n3, 8);
 
-        var prize_fund = 0;
-        var participants = new_dict();
-        ifnot (round.null?()) {
-            (prize_fund, participants) = unpack_round(round);
-        }
+        var (prize_fund, participants) = unpack_round(round);
         
         participants~udict_set_builder(256, addr, nums);
 
-        round = pack_round(prize_fund + msg_value, participants);
+        round = pack_round(id, prize_fund + msg_value, participants);
 
-        save_data(round, seqno, owner);
+        save_data(round, old_round, seqno, owner);
 
         return();
-    }
-
-    if (op == 2) {
+    } else if (op == 2) {
         ;; inc prize fund
-        var (round, seqno, owner) = load_data();
+        in_msg.end_parse();
+
+        var (id, round, old_round, seqno, owner) = load_data();
         
-        ifnot (round.null?()) {
-            var (prize_fund, participants) = unpack_round(round);
+        var (prize_fund, participants) = unpack_round(round);
 
-            round = pack_round(prize_fund + msg_value, participants);
-        } else {
-            round = pack_round(msg_value, new_dict());
-        }
+        round = pack_round(id, prize_fund + msg_value, participants);
 
-        save_data(round, seqno, owner);
+        save_data(round, old_round, seqno, owner);
 
         return();
     }
@@ -102,31 +163,52 @@ cell pack_round(int prize_fund, cell participants) {
     var cs = in_msg;
     var (msg_seqno, valid_until, op) = (cs~load_uint(32), cs~load_uint(32), cs~load_uint(32));
     throw_if(35, valid_until <= now());
-    var (round, seqno, owner) = load_data();
+    var (round, old_round, seqno, owner) = load_data();
     throw_unless(33, msg_seqno == seqno);
     throw_unless(34, check_signature(slice_hash(in_msg), signature, owner));
     accept_message();
     if (op == 1) {
+        ;; transfer
         cs~touch();
         while (cs.slice_refs()) {
             var mode = cs~load_uint(8);
             send_raw_message(cs~load_ref(), mode);
         }
         cs.end_parse();
-    ;;} else if (op == 2) {
+    } else if (op == 2) {
+        ;; conduct round
+        cs.end_parse();
+        (round, old_round) = conduct_round(round);
     } else {
-        throw_unless(40, op == 9);  ;; 9 - op for init
+        ;; 9 - op for init
+        cs.end_parse();
+        throw_unless(40, op == 9);
     }
-    save_data(round, seqno + 1, owner);
+    save_data(round, old_round, seqno + 1, owner);
 }
 
 ;; Get methods
 
 int seqno() method_id {
-    return get_data().begin_parse().skip_dict().preload_uint(32);
+    return get_data().begin_parse().skip_dict().skip_dict().preload_uint(32);
 }
 
 int prize_fund() method_id {
     cell round = get_data().begin_parse().preload_dict();
-    return round.null?() ? 0 : round.begin_parse().preload_grams();
+    return round.null?() ? 0 : round.begin_parse().skip_uint(32).preload_grams();
+}
+
+cell lucky_nums() method_id {
+    cell old_round = get_data().begin_parse().skip_dict().preload_dict();
+    return old_round.null?() ? nil : old_round.begin_parse().preload_dict();
+}
+
+(cell, cell, cell) winners() method_id {
+    cell old_round = get_data().begin_parse().skip_dict().preload_dict();
+    if (old_round.null?()) {
+        return nil;
+    }
+    old_round_s = old_round.begin_parse().skip_dict();
+    var (d1, d2, d3) = (old_round_s~load_dict(), old_round_s~load_dict(), old_round_s~load_dict());
+    return (d1, d2, d3);
 }

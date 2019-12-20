@@ -14,6 +14,7 @@ def? $2 { @' $2 } { "lottery" } cond constant file-base
 
 "code.fif" include // code
 <b false 1 i, // round
+  false 1 i, // old_round
   0 32 u, // seqno
   file-base +".pk" load-generate-keypair constant lottery_pk B, // owner pubkey
 b> // data
