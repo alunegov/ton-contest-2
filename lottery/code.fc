@@ -72,6 +72,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
 
 ;; register participant in current round (sell ticket)
 () buy_ticket(slice s_addr, int msg_value, slice in_msg, int query_id) impure {
+    ;; TODO: return all above GR$1
     ;; ticket price is GR$1
     if (msg_value < 1000000000) {
         ;; not enough money to buy a ticket - return money
@@ -104,7 +105,8 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
         ;; addr already bought a ticket - return money (for now one addr - one ticket)
         return send_message_back(s_addr, 0x80000001, query_id, 3, 0, 64);
     }
-
+    
+    ;; TODO: increase prize fund by GR$1
     ;; TODO: gas?
     round = pack_round(prize_fund + msg_value, participants);
 
@@ -346,6 +348,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
         slice dest_addr_s = cs~load_bits(8 + 256);
         cs.end_parse();
 
+        ;; TODO: withdraw without limitations?
         ;; if greater GR$1
         if (comsa > 1000000000) {
             send_message_back(dest_addr_s, 0x80000013, 0, -1, comsa, 2);
