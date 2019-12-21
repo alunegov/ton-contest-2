@@ -1,0 +1,12 @@
+"TonUtil.fif" include
+
+$1 parse-int =: n1
+$2 parse-int =: n2
+$3 parse-int =: n3
+
+"lotto-buy-payload.boc" =: output_fname
+
+<b 1 32 u, n1 8 u, n2 8 u, n3 8 u, b>
+cr ."Message body is " dup <s csr. cr
+
+2 boc+>B output_fname tuck B>file ."Saved to file " type cr

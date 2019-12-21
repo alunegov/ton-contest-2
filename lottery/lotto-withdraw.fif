@@ -1,0 +1,7 @@
+
+"lotto-withdraw-payload.boc" =: output_fname
+
+<b 3 32 u, b>
+cr ."Message body is " dup <s csr. cr
+
+2 boc+>B output_fname tuck B>file ."Saved to file " type cr

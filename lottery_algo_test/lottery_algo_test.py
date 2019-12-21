@@ -1,9 +1,9 @@
 import random
 
-max_participants_count = 1000000
+max_participants_count = 100
 max_num = 99
 nums_count = 3
-lucky_nums_count = 13
+lucky_nums_count = 7
 ticket_price = 1
 rounds_count = 24
 
@@ -32,8 +32,8 @@ def run_round(prev_balance, prev_round_prize_fund):
     two_prize_fund = prize_fund * 0.20
     one_prize_fund = prize_fund * 0.17
     # round_income <= prize_fund
-    commision = round_income * 0.03
-    #commision = prize_fund * 0.03
+    #commision = round_income * 0.03
+    commision = prize_fund * 0.03
 
     participants_nums = []
 

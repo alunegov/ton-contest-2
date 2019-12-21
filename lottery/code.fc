@@ -1,79 +1,210 @@
 
 int preload_grams(slice s) asm "LDGRAMS" "DROP";
 
-;; round, old_round, seqno, owner
+;; round, old_round, comsa, seqno, owner
 _ load_data() {
-    slice data_s = get_data().begin_parse();
-    var res = (data_s~load_dict(), data_s~load_dict(), data_s~load_uint(32), data_s~load_uint(256));
-    data_s.end_parse();
+    slice ds = get_data().begin_parse();
+    var res = (ds~load_dict(), ds~load_dict(), ds~load_grams(), ds~load_uint(32), ds~load_uint(256));
+    ds.end_parse();
     return res;
 }
 
-() save_data(cell round, cell old_round, int seqno, int owner) impure {
+() save_data(cell round, cell old_round, int comsa, int seqno, int owner) impure {
     set_data(begin_cell()
         .store_dict(round)
         .store_dict(old_round)
+        .store_grams(comsa)
         .store_uint(seqno, 32)
         .store_uint(owner, 256)
         .end_cell());    
 }
 
-;; id, prize_fund, participants
+;; prize_fund, participants
 _ unpack_round(cell round) {
     if (round.null?()) {
-        return (0, 0, new_dict());
+        return (0, new_dict());
     }
-    var round_s = round.begin_parse();
-    var res = (round_s~load_uint(32), round_s~load_grams(), round_s~load_dict());
-    round_s.end_parse();
+    slice ds = round.begin_parse();
+    var res = (ds~load_grams(), ds~load_dict());
+    ds.end_parse();
     return res;
 }
 
-cell pack_round(int id, int prize_fund, cell participants) {
+cell pack_round(int prize_fund, cell participants) {
     return begin_cell()
-        .store_uint(id, 32)
         .store_grams(prize_fund)
         .store_dict(participants)
         .end_cell();
 }
 
-(cell, cell) conduct_round(cell round) {
-    var (id, prize_fund, participants) = unpack_round(round);
+;; lucky_nums, p1, p2, p3, d
+_ unpack_old_round(cell old_round) {
+    slice ds = old_round.begin_parse();
+    var res = (ds~load_dict(), ds~load_grams(), ds~load_grams(), ds~load_grams(), ds~load_dict());
+    ds.end_parse();
+    return res;
+}
 
-    ;;randomize_lt();
+cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
+    return begin_cell()
+        .store_dict(lucky_nums)
+        .store_grams(p1)
+        .store_grams(p2)
+        .store_grams(p3)
+        .store_dict(d)
+        .end_cell();
+}
+
+() send_message_back(slice addr, int ans_tag, int query_id, int body, int grams, int mode) impure {
+  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool src:MsgAddress -> 011000
+  builder msg = begin_cell()
+    .store_uint(0x18, 6)
+    .store_slice(addr)
+    .store_grams(grams)
+    .store_uint(0, 1 + 4 + 4 + 64 + 32 + 1 + 1)
+    .store_uint(ans_tag, 32)
+    .store_uint(query_id, 64);
+  if (body >= 0) {
+    msg~store_uint(body, 32);
+  }
+  send_raw_message(msg.end_cell(), mode);
+}
+
+;; register participant in current round (sell ticket)
+() buy_ticket(slice s_addr, int msg_value, slice in_msg, int query_id) impure {
+    ;; ticket price is GR$1
+    if (msg_value < 1000000000) {
+        ;; not enough money to buy a ticket - return money
+        return send_message_back(s_addr, 0x80000001, query_id, 1, 0, 64);
+    }
+
+    (int wc, int addr) = parse_std_addr(s_addr);
+    ;;throw_unless(39, wc == 0);
+    ;; TODO: wc?
+
+    var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
+    in_msg.end_parse();
+
+    if ((n1 == n2) | (n1 == n3) | (n2 == n3)) {
+        ;; got non-unique nums - return money
+        return send_message_back(s_addr, 0x80000001, query_id, 2, 0, 64);
+    }
+
+    var (round, old_round, comsa, seqno, owner) = load_data();
+
+    var (prize_fund, participants) = unpack_round(round);
+
+    builder nums = begin_cell()
+        .store_uint(n1, 8)
+        .store_uint(n2, 8)
+        .store_uint(n3, 8);
+
+    var f = participants~udict_add_builder?(256, addr, nums);
+    ifnot (f) {
+        ;; addr already bought a ticket - return money (for now one addr - one ticket)
+        return send_message_back(s_addr, 0x80000001, query_id, 3, 0, 64);
+    }
+
+    ;; TODO: gas?
+    round = pack_round(prize_fund + msg_value, participants);
+
+    save_data(round, old_round, comsa, seqno, owner);
+
+    ;; TODO: confirmation?
+
+    return ();
+}
+
+;; increase prize fund in current round
+() sponsor_prize_fund(int msg_value) impure {
+    var (round, old_round, comsa, seqno, owner) = load_data();
+    
+    var (prize_fund, participants) = unpack_round(round);
+    
+    ;; TODO: gas?
+    round = pack_round(prize_fund + msg_value, participants);
+
+    save_data(round, old_round, comsa, seqno, owner);
+
+    ;; TODO: confirmation?
+
+    return ();
+}
+
+;; sends prize in prev round to addr
+() withdraw_prize(slice s_addr, int query_id) impure {
+    (int wc, int addr) = parse_std_addr(s_addr);
+    ;;throw_unless(39, wc == 0);
+    ;; TODO: wc?
+
+    var (round, old_round, comsa, seqno, owner) = load_data();
+
+    if (old_round.null?()) {
+        return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
+    }
+
+    var (lucky_nums, p1, p2, p3, d) = unpack_old_round(old_round);
+    
+    var (ms, f) = d~udict_delete_get?(256, addr);
+    ifnot (f) {
+        return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
+    }
+
+    int m = ms~load_uint(2);
+    ms.end_parse();
+
+    cell old_round = pack_old_round(lucky_nums, p1, p2, p3, d);
+
+    save_data(round, old_round, comsa, seqno, owner);
+
+    int amount = 0;
+    if (m == 1) {
+        amount = p1;
+    }
+    if (m == 2) {
+        amount = p2;
+    }
+    if (m == 3) {
+        amount = p3;
+    }
+    send_message_back(s_addr, 0x80000003, query_id, -1, amount, 64);
+}
+
+;; runs lottery round
+;; round, old_round, comsa
+(cell, cell, int) conduct_round(cell round) {
+    var (prize_fund, participants) = unpack_round(round);
+
+    randomize_lt();
 
     cell lucky_nums = new_dict();
-    ;;lucky_nums~udict_add_builder?(8, 0, begin_cell());
-    ;;lucky_nums~udict_add_builder?(8, 1, begin_cell());
-    ;;lucky_nums~udict_add_builder?(8, 2, begin_cell());
-    int i = 0;
-    while (i < 13) {
-        randomize_lt();
-
-        var f = lucky_nums~udict_add_builder?(8, rand(99), begin_cell());
-        if (f) {
-            i += 1;
-        }
-    }
+    lucky_nums~udict_add_builder?(8, 0, begin_cell());
+    lucky_nums~udict_add_builder?(8, 1, begin_cell());
+    lucky_nums~udict_add_builder?(8, 2, begin_cell());
+    ;;int i = 0;
+    ;;while (i < 13) {
+    ;;    int f = lucky_nums~udict_add_builder?(8, rand(100), begin_cell());
+    ;;    if (f) {
+    ;;        i += 1;
+    ;;   }
+    ;;}
 
     int c1 = 0;
     int c2 = 0;
     int c3 = 0;
 
-    cell d1 = new_dict();
-    cell d2 = new_dict();
-    cell d3 = new_dict();
+    cell d = new_dict();
 
     int i = -1;
     do {
-        (i, var nums, var f) = participants.udict_get_next?(256, i);
+        (i, slice nums, int f) = participants.udict_get_next?(256, i);
         if (f) {
             nums~touch();
             var (n1, n2, n3) = (nums~load_uint(8), nums~load_uint(8), nums~load_uint(8));
             nums.end_parse();
 
             int ff = 0;
-            (_, var f1) = lucky_nums.udict_get?(8, n1);
+            (_, int f1) = lucky_nums.udict_get?(8, n1);
             if (f1) {
                 ff += 1;
             }
@@ -88,27 +219,28 @@ cell pack_round(int id, int prize_fund, cell participants) {
 
             if (ff == 3) {
                 c3 += 1;
-                d3~udict_set_builder(256, i, begin_cell());
+                d~udict_set_builder(256, i, begin_cell().store_uint(3, 2));
             }
 
             if (ff == 2) {
                 c2 += 1;
-                d2~udict_set_builder(256, i, begin_cell());
+                d~udict_set_builder(256, i, begin_cell().store_uint(2, 2));
             }
 
             if (ff == 1) {
                 c1 += 1;
-                d1~udict_set_builder(256, i, begin_cell());
+                d~udict_set_builder(256, i, begin_cell().store_uint(1, 2));
             }
         }
     } until (~ f);
 
     int pf3 = prize_fund * 6 / 10;
-    int pf2 = prize_fund * 2 / 10;
-    int pf1 = prize_fund * 17 / 100;
-    int commision = prize_fund * 3 / 100;
+    int pf2 = prize_fund * 22 / 100;
+    int pf1 = prize_fund * 15 / 100;
+    ;; TODO: calc comsa only from current round tickets, excluding prev round fund?
+    int comsa = prize_fund * 3 / 100;
 
-    int next_round_fund = prize_fund - commision;
+    int next_round_fund = prize_fund - comsa;
 
     int p3 = 0;
     int p2 = 0;
@@ -126,99 +258,78 @@ cell pack_round(int id, int prize_fund, cell participants) {
         next_round_fund -= pf3;
     }
 
-    round = pack_round(id + 1, next_round_fund, new_dict());
+    ;; reset next current round
+    round = pack_round(next_round_fund, new_dict());
 
-    cell old_round = begin_cell()
-        .store_dict(lucky_nums)
-        .store_grams(p1)
-        .store_grams(p2)
-        .store_grams(p3)
-        .store_dict(d1)
-        .store_dict(d2)
-        .store_dict(d3)
-        .end_cell();
+    ;; form result of current round (prev round)
+    cell old_round = pack_old_round(lucky_nums, p1, p2, p3, d);
 
-    return (round, old_round);
+    return (round, old_round, comsa);
 }
 
+;; from any account
 () recv_internal(int msg_value, cell in_msg_cell, slice in_msg) impure {
-    var cs = in_msg_cell.begin_parse();
-    var flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
-    var s_addr = cs~load_msg_addr();
+    slice cs = in_msg_cell.begin_parse();
+    int flags = cs~load_uint(4);  ;; int_msg_info$0 ihr_disabled:Bool bounce:Bool bounced:Bool
+    slice s_addr = cs~load_msg_addr();
 
     if ((flags & 1) | in_msg.slice_empty?()) {
-        ;; a bounced message, or a simple transfer
+        ;; a bounced message, or a simple transfer without comment - accept money
         return ();
     }
 
     int op = in_msg~load_uint(32);
 
+    if (op == 0) {
+        ;; simple transfer with comment - accept money
+        ;; TODO: buy ticket with nums from comment (str -> 3 nums)
+        return ();
+    }
+
+    ;; TODO: query_id: int64
+
     if (op == 1) {
-        ;; add new ticket
-        var (wc, addr) = parse_std_addr(s_addr);
-        ;;throw_unless(39, wc == 0);
-        ;;throw_unless(40, addr == 1);
-
-        var msg_round_id = in_msg~load_uint(32);
-        var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
-        in_msg.end_parse();
-
-        ;; TODO: check for unique nums
-        var nums = begin_cell()
-            .store_uint(n1, 8)
-            .store_uint(n2, 8)
-            .store_uint(n3, 8);
-
-        var (round, old_round, seqno, owner) = load_data();
-
-        var (id, prize_fund, participants) = unpack_round(round);
-
-        throw_unless(39, msg_round_id == id);  ;; send_back
-
-        participants~udict_set_builder(256, addr, nums);
-
-        round = pack_round(id, prize_fund + msg_value, participants);
-
-        save_data(round, old_round, seqno, owner);
-
-        return();
+        ;; buy a ticket
+        return buy_ticket(s_addr, msg_value, in_msg, 0);
     }
     
     if (op == 2) {
-        ;; inc prize fund
+        ;; increase prize fund
         in_msg.end_parse();
-
-        var (round, old_round, seqno, owner) = load_data();
-        
-        var (id, prize_fund, participants) = unpack_round(round);
-
-        round = pack_round(id, prize_fund + msg_value, participants);
-
-        save_data(round, old_round, seqno, owner);
-
-        return();
+        return sponsor_prize_fund(msg_value);
     }
 
-    ;; if op is non-zero and its higher bit is zero, throw an exception (the message is an unsupported query) to
-    ;; bounce message back to sender
-    throw_unless(37, (op == 0) | (op & (1 << 31)));
-    ;; do nothing for other internal messages    
+    if (op == 3) {
+        ;; withdraw prize
+        in_msg.end_parse();
+        return withdraw_prize(s_addr, 0);
+    }
+
+    ifnot (op & (1 << 31)) {
+        ;; unknown query - return money
+        return send_message_back(s_addr, 0xffffffff, 0, op, 0, 64);
+    }
+
+    ;; unknown answer, ignore - accept money
+    return ();
 }
 
+;; from onwer only
+;; based on wallet-v2
 () recv_external(slice in_msg) impure {
-    var signature = in_msg~load_bits(512);
-    var cs = in_msg;
+    slice signature = in_msg~load_bits(512);
+    slice cs = in_msg;
     var (msg_seqno, valid_until, op) = (cs~load_uint(32), cs~load_uint(32), cs~load_uint(32));
     throw_if(35, valid_until <= now());
-    var (round, old_round, seqno, owner) = load_data();
+    var (round, old_round, comsa, seqno, owner) = load_data();
     throw_unless(33, msg_seqno == seqno);
     throw_unless(34, check_signature(slice_hash(in_msg), signature, owner));
     accept_message();
     if (op == 1) {
-        ;; transfer
+        ;; transfer. debug only
         cs~touch();
         while (cs.slice_refs()) {
-            var mode = cs~load_uint(8);
+            int mode = cs~load_uint(8);
             send_raw_message(cs~load_ref(), mode);
         }
         cs.end_parse();
@@ -226,42 +337,49 @@ cell pack_round(int id, int prize_fund, cell participants) {
     if (op == 2) {
         ;; conduct round
         cs.end_parse();
-        (round, old_round) = conduct_round(round);
+        (round, old_round, int new_comsa) = conduct_round(round);
+        comsa += new_comsa;
     }
     if (op == 3) {
-        ;; get commision
-    } 
+        ;; withdraw commision
+        cs~touch();
+        slice dest_addr_s = cs~load_bits(8 + 256);
+        cs.end_parse();
+
+        ;; if greater GR$1
+        if (comsa > 1000000000) {
+            send_message_back(dest_addr_s, 0x80000013, 0, -1, comsa, 2);
+            comsa = 0;
+        }
+    }
     ;; 9 - op for init
-    ;;throw_unless(40, op == 9);
-    save_data(round, old_round, seqno + 1, owner);
+    save_data(round, old_round, comsa, seqno + 1, owner);
 }
 
 ;; Get methods
 
 int seqno() method_id {
-    return get_data().begin_parse().skip_dict().skip_dict().preload_uint(32);
+    (_, _, _, int seqno, _) = load_data();
+    return seqno;
 }
 
+;; return prize fund of current round
 int prize_fund() method_id {
     cell round = get_data().begin_parse().preload_dict();
-    return round.null?() ? 0 : round.begin_parse().skip_bits(32).preload_grams();
+    return round.null?() ? 0 : round.begin_parse().preload_grams();
 }
 
+;; return winning nums of prev round
 cell lucky_nums() method_id {
-    cell old_round = get_data().begin_parse().skip_dict().preload_dict();
-    return old_round.null?() ? begin_cell().end_cell() : old_round.begin_parse().preload_dict();
-}
-
-cell lucky_nums2() method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {
         return begin_cell().end_cell();
     }
     cell lucky_nums = old_round.begin_parse().preload_dict();
-    var res = begin_cell();
+    builder res = begin_cell();
     int i = -1;
     do {
-        (i, _, var f) = lucky_nums.udict_get_next?(8, i);
+        (i, _, int f) = lucky_nums.udict_get_next?(8, i);
         if (f) {
             res~store_uint(i, 8);
         }
@@ -269,36 +387,43 @@ cell lucky_nums2() method_id {
     return res.end_cell();
 }
 
-(int, int, int, cell, cell, cell) winners() method_id {
+;; return prizes (1, 2 and 3 nums matched) and winners of prev round
+(int, int, int, cell) winners() method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {
-        return (0, 0, 0, new_dict(), new_dict(), new_dict());
+        return (0, 0, 0, new_dict());
     }
-    slice old_round_s = old_round.begin_parse().skip_dict();
-    var (p1, p2, p3) = (old_round_s~load_grams(), old_round_s~load_grams(), old_round_s~load_grams());
-    var (d1, d2, d3) = (old_round_s~load_dict(), old_round_s~load_dict(), old_round_s~load_dict());
-    return (p1, p2, p3, d1, d2, d3);
+    slice ds = old_round.begin_parse().skip_dict();
+    var (p1, p2, p3, d) = (ds~load_grams(), ds~load_grams(), ds~load_grams(), ds~load_dict());
+    return (p1, p2, p3, d);
 }
 
+;; returns prize in prev round for addr
 int is_winner(int addr) method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {
         return 0;
     }
-    slice old_round_s = old_round.begin_parse().skip_dict();
-    var (p1, p2, p3) = (old_round_s~load_grams(), old_round_s~load_grams(), old_round_s~load_grams());
-    var (d1, d2, d3) = (old_round_s~load_dict(), old_round_s~load_dict(), old_round_s~load_dict());
-    (_, var f) = d1.udict_get?(256, addr);
+    slice ds = old_round.begin_parse().skip_dict();
+    var (p1, p2, p3, d) = (ds~load_grams(), ds~load_grams(), ds~load_grams(), ds~load_dict());
+    (slice ms, int f) = d.udict_get?(256, addr);
     if (f) {
-        return p1;
-    }
-    (_, f) = d2.udict_get?(256, addr);
-    if (f) {
-        return p2;
-    }
-    (_, f) = d3.udict_get?(256, addr);
-    if (f) {
-        return p3;
+        int m = ms.preload_uint(2);
+        if (m == 1) {
+            return p1;
+        }
+        if (m == 2) {
+            return p2;
+        }
+        if (m == 3) {
+            return p3;
+        }
+        return 0;
     }
     return 0;
+}
+
+;; returns commision
+int comsa() method_id {
+    return get_data().begin_parse().skip_dict().skip_dict().preload_grams();
 }

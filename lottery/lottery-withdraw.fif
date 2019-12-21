@@ -1,0 +1,25 @@
+"TonUtil.fif" include
+
+120 =: timeout   // external message expires in 120 seconds
+
+$1 =: file-base
+$2 parse-int =: seqno
+$3 true parse-load-address drop 2=: dest_addr
+def? $4 { @' $4 } { "lottery-withdraw-query" } cond constant savefile
+
+file-base +".addr" load-address-verbose 2constant lottery_addr
+file-base +".pk" load-keypair nip constant lottery_pk
+
+// msg_seqno, valid_until, op, dest_addr
+<b seqno 32 u, now timeout + 32 u, 3 32 u, dest_addr addr, b>
+
+dup ."signing message: " <s csr. cr
+dup hashu lottery_pk ed25519_sign_uint
+
+<b swap B, swap <s s, b>
+<b b{1000100} s, lottery_addr addr, 0 Gram, b{01} s, swap ref, b>
+dup ."External message for withdraw commision is " <s csr. cr
+
+2 boc+>B dup Bx. cr
+savefile +".boc" tuck B>file
+."(Saved withdraw commision query to file " type .")" cr
