@@ -132,59 +132,70 @@ PROGRAM{
       send_message_back CALLDICT
     }>	//  s_addr msg_value in_msg query_id
     s3 PUSH	//  s_addr msg_value in_msg query_id s_addr
-    REWRITESTDADDR	//  s_addr msg_value in_msg query_id _66 _67
-    NIP	//  s_addr msg_value in_msg query_id addr
+    REWRITESTDADDR	//  s_addr msg_value in_msg query_id wc addr
+    SWAP	//  s_addr msg_value in_msg query_id addr wc
+    0 NEQINT	//  s_addr msg_value in_msg query_id addr _15
+    IFJMP:<{	//  s_addr msg_value in_msg query_id addr
+      s1 s3 XCHG
+      3 BLKDROP	//  s_addr query_id
+      2147483649 PUSHINT	//  s_addr query_id _16=2147483649
+      4 PUSHINT	//  s_addr query_id _16=2147483649 _17=4
+      0 PUSHINT	//  s_addr query_id _16=2147483649 _17=4 _18=0
+      s2 s3 XCHG
+      64 PUSHINT	//  s_addr _16=2147483649 query_id _17=4 _18=0 _19=64
+      send_message_back CALLDICT
+    }>	//  s_addr msg_value in_msg query_id addr
     s0 s2 XCHG	//  s_addr msg_value addr query_id in_msg
-    8 LDU	//  s_addr msg_value addr query_id _17 in_msg
-    8 LDU	//  s_addr msg_value addr query_id _17 _20 in_msg
+    8 LDU	//  s_addr msg_value addr query_id _24 in_msg
+    8 LDU	//  s_addr msg_value addr query_id _24 _27 in_msg
     8 LDU	//  s_addr msg_value addr query_id n1 n2 n3 in_msg
     ENDS
     s2 s1 PUSH2	//  s_addr msg_value addr query_id n1 n2 n3 n1 n2
-    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _27
-    s3 s1 PUSH2	//  s_addr msg_value addr query_id n1 n2 n3 _27 n1 n3
-    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _27 _28
-    OR	//  s_addr msg_value addr query_id n1 n2 n3 _29
-    s2 s1 PUSH2	//  s_addr msg_value addr query_id n1 n2 n3 _29 n2 n3
-    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _29 _30
-    OR	//  s_addr msg_value addr query_id n1 n2 n3 _31
+    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _34
+    s3 s1 PUSH2	//  s_addr msg_value addr query_id n1 n2 n3 _34 n1 n3
+    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _34 _35
+    OR	//  s_addr msg_value addr query_id n1 n2 n3 _36
+    s2 s1 PUSH2	//  s_addr msg_value addr query_id n1 n2 n3 _36 n2 n3
+    EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _36 _37
+    OR	//  s_addr msg_value addr query_id n1 n2 n3 _38
     IFJMP:<{	//  s_addr msg_value addr query_id n1 n2 n3
       s3 s5 XCHG
       5 BLKDROP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _32=2147483649
-      2 PUSHINT	//  s_addr query_id _32=2147483649 _33=2
-      0 PUSHINT	//  s_addr query_id _32=2147483649 _33=2 _34=0
+      2147483649 PUSHINT	//  s_addr query_id _39=2147483649
+      2 PUSHINT	//  s_addr query_id _39=2147483649 _40=2
+      0 PUSHINT	//  s_addr query_id _39=2147483649 _40=2 _41=0
       s2 s3 XCHG
-      64 PUSHINT	//  s_addr _32=2147483649 query_id _33=2 _34=0 _35=64
+      64 PUSHINT	//  s_addr _39=2147483649 query_id _40=2 _41=0 _42=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value addr query_id n1 n2 n3
     load_data CALLDICT	//  s_addr msg_value addr query_id n1 n2 n3 round old_round comsa seqno owner
     s0 s4 XCHG	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno round
     unpack_round CALLDICT	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno prize_fund participants
-    NEWC	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno prize_fund participants _47
-    s1 s9 XCHG	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund n1 _47
-    8 STU	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund _49
-    s1 s7 XCHG	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno n2 _49
-    8 STU	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno _51
-    s1 s5 XCHG	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa n3 _51
+    NEWC	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno prize_fund participants _54
+    s1 s9 XCHG	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund n1 _54
+    8 STU	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund _56
+    s1 s7 XCHG	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno n2 _56
+    8 STU	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno _58
+    s1 s5 XCHG	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa n3 _58
     8 STU	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa nums
     s0 s8 s6 XCHG3
-    8 PUSHPOW2	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner nums addr participants _56=256
+    8 PUSHPOW2	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner nums addr participants _63=256
     DICTUADDB	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants f
     IFNOTJMP:<{	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants
       s5 s7 XCHG
       7 BLKDROP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _58=2147483649
-      3 PUSHINT	//  s_addr query_id _58=2147483649 _59=3
-      0 PUSHINT	//  s_addr query_id _58=2147483649 _59=3 _60=0
+      2147483649 PUSHINT	//  s_addr query_id _65=2147483649
+      3 PUSHINT	//  s_addr query_id _65=2147483649 _66=3
+      0 PUSHINT	//  s_addr query_id _65=2147483649 _66=3 _67=0
       s2 s3 XCHG
-      64 PUSHINT	//  s_addr _58=2147483649 query_id _59=3 _60=0 _61=64
+      64 PUSHINT	//  s_addr _65=2147483649 query_id _66=3 _67=0 _68=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants
     s5 POP
     s7 POP	//  owner msg_value comsa participants old_round prize_fund seqno
     s0 s5 XCHG	//  owner seqno comsa participants old_round prize_fund msg_value
-    ADD	//  owner seqno comsa participants old_round _63
-    ROT	//  owner seqno comsa old_round _63 participants
+    ADD	//  owner seqno comsa participants old_round _70
+    ROT	//  owner seqno comsa old_round _70 participants
     pack_round CALLDICT	//  owner seqno comsa old_round round
     s3 s4 XCHG2	//  round old_round comsa seqno owner
     save_data CALLDICT
@@ -205,33 +216,43 @@ PROGRAM{
   withdraw_prize PROC:<{
     //  s_addr query_id
     OVER	//  s_addr query_id s_addr
-    REWRITESTDADDR	//  s_addr query_id _53 _54
-    NIP	//  s_addr query_id addr
+    REWRITESTDADDR	//  s_addr query_id wc addr
+    SWAP	//  s_addr query_id addr wc
+    0 NEQINT	//  s_addr query_id addr _6
+    IFJMP:<{	//  s_addr query_id addr
+      DROP	//  s_addr query_id
+      4294967294 PUSHINT	//  s_addr query_id _7=4294967294
+      -1 PUSHINT	//  s_addr query_id _7=4294967294 _8=-1
+      0 PUSHINT	//  s_addr query_id _7=4294967294 _8=-1 _9=0
+      s2 s3 XCHG
+      64 PUSHINT	//  s_addr _7=4294967294 query_id _8=-1 _9=0 _10=64
+      send_message_back CALLDICT
+    }>	//  s_addr query_id addr
     load_data CALLDICT	//  s_addr query_id addr round old_round comsa seqno owner
     s3 PUSH	//  s_addr query_id addr round old_round comsa seqno owner old_round
-    ISNULL	//  s_addr query_id addr round old_round comsa seqno owner _11
+    ISNULL	//  s_addr query_id addr round old_round comsa seqno owner _18
     IFJMP:<{	//  s_addr query_id addr round old_round comsa seqno owner
       6 BLKDROP	//  s_addr query_id
-      4294967294 PUSHINT	//  s_addr query_id _12=4294967294
-      -1 PUSHINT	//  s_addr query_id _12=4294967294 _13=-1
-      0 PUSHINT	//  s_addr query_id _12=4294967294 _13=-1 _14=0
+      4294967294 PUSHINT	//  s_addr query_id _19=4294967294
+      -1 PUSHINT	//  s_addr query_id _19=4294967294 _20=-1
+      0 PUSHINT	//  s_addr query_id _19=4294967294 _20=-1 _21=0
       s2 s3 XCHG
-      64 PUSHINT	//  s_addr _12=4294967294 query_id _13=-1 _14=0 _15=64
+      64 PUSHINT	//  s_addr _19=4294967294 query_id _20=-1 _21=0 _22=64
       send_message_back CALLDICT
     }>	//  s_addr query_id addr round old_round comsa seqno owner
     s0 s3 XCHG	//  s_addr query_id addr round owner comsa seqno old_round
     unpack_old_round CALLDICT	//  s_addr query_id addr round owner comsa seqno lucky_nums p1 p2 p3 d
     s1 s9 XCHG
-    8 PUSHPOW2	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 addr d _26=256
+    8 PUSHPOW2	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 addr d _33=256
     DICTUDELGET
     NULLSWAPIFNOT	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d ms f
     IFNOTJMP:<{	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d ms
       10 BLKDROP	//  s_addr query_id
-      4294967294 PUSHINT	//  s_addr query_id _28=4294967294
-      -1 PUSHINT	//  s_addr query_id _28=4294967294 _29=-1
-      0 PUSHINT	//  s_addr query_id _28=4294967294 _29=-1 _30=0
+      4294967294 PUSHINT	//  s_addr query_id _35=4294967294
+      -1 PUSHINT	//  s_addr query_id _35=4294967294 _36=-1
+      0 PUSHINT	//  s_addr query_id _35=4294967294 _36=-1 _37=0
       s2 s3 XCHG
-      64 PUSHINT	//  s_addr _28=4294967294 query_id _29=-1 _30=0 _31=64
+      64 PUSHINT	//  s_addr _35=4294967294 query_id _36=-1 _37=0 _38=64
       send_message_back CALLDICT
     }>	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d ms
     2 LDU	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d m ms
@@ -245,29 +266,29 @@ PROGRAM{
     save_data CALLDICT
     0 PUSHINT	//  s_addr query_id p3 p2 m p1 amount=0
     s2 PUSH	//  s_addr query_id p3 p2 m p1 amount=0 m
-    1 EQINT	//  s_addr query_id p3 p2 m p1 amount=0 _44
+    1 EQINT	//  s_addr query_id p3 p2 m p1 amount=0 _51
     IF:<{	//  s_addr query_id p3 p2 m p1 amount=0
       DROP	//  s_addr query_id p3 p2 m amount
     }>ELSE<{
       NIP	//  s_addr query_id p3 p2 m amount
     }>
     OVER	//  s_addr query_id p3 p2 m amount m
-    2 EQINT	//  s_addr query_id p3 p2 m amount _46
+    2 EQINT	//  s_addr query_id p3 p2 m amount _53
     IF:<{	//  s_addr query_id p3 p2 m amount
       DROP	//  s_addr query_id p3 amount m
     }>ELSE<{
       s2 POP	//  s_addr query_id p3 amount m
     }>
-    3 EQINT	//  s_addr query_id p3 amount _48
+    3 EQINT	//  s_addr query_id p3 amount _55
     IF:<{	//  s_addr query_id p3 amount
       DROP	//  s_addr query_id amount
     }>ELSE<{
       NIP	//  s_addr query_id amount
     }>
-    2147483651 PUSHINT	//  s_addr query_id amount _49=2147483651
-    -1 PUSHINT	//  s_addr query_id amount _49=2147483651 _50=-1
+    2147483651 PUSHINT	//  s_addr query_id amount _56=2147483651
+    -1 PUSHINT	//  s_addr query_id amount _56=2147483651 _57=-1
     s3 s0 s3 XCHG3
-    64 PUSHINT	//  s_addr _49=2147483651 query_id _50=-1 amount _51=64
+    64 PUSHINT	//  s_addr _56=2147483651 query_id _57=-1 amount _58=64
     send_message_back CALLDICT
   }>
   conduct_round PROC:<{
@@ -583,27 +604,20 @@ PROGRAM{
       264 PUSHINT	//  old_round seqno owner round comsa cs _63
       LDSLICEX	//  old_round seqno owner round comsa dest_addr_s cs
       ENDS
-      OVER
-      1000000000 PUSHINT	//  old_round seqno owner round comsa dest_addr_s comsa _66=1000000000
-      GREATER	//  old_round seqno owner round comsa dest_addr_s _67
-      IF:<{	//  old_round seqno owner round comsa dest_addr_s
-        2147483667 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _68=2147483667
-        0 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _68=2147483667 _69=0
-        -1 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _68=2147483667 _69=0 _70=-1
-        4 ROLL
-        2 PUSHINT	//  old_round seqno owner round dest_addr_s _68=2147483667 _69=0 _70=-1 comsa _71=2
-        send_message_back CALLDICT
-        0 PUSHINT	//  old_round seqno owner round comsa=0
-      }>ELSE<{
-        DROP	//  old_round seqno owner round comsa
-      }>
+      2147483667 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=2147483667
+      0 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=2147483667 _67=0
+      -1 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=2147483667 _67=0 _68=-1
+      4 ROLL
+      2 PUSHINT	//  old_round seqno owner round dest_addr_s _66=2147483667 _67=0 _68=-1 comsa _69=2
+      send_message_back CALLDICT
+      0 PUSHINT	//  old_round seqno owner round comsa=0
     }>ELSE<{
       s2 POP	//  old_round seqno owner round comsa
     }>
     s0 s3 XCHG	//  old_round comsa owner round seqno
-    INC	//  old_round comsa owner round _75
+    INC	//  old_round comsa owner round _73
     s1 s4 XCHG
-    s3 s0 s3 XCHG3	//  round old_round comsa _75 owner
+    s3 s0 s3 XCHG3	//  round old_round comsa _73 owner
     save_data CALLDICT
   }>
   seqno PROC:<{

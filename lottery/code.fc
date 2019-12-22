@@ -80,8 +80,11 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     }
 
     (int wc, int addr) = parse_std_addr(s_addr);
-    ;;throw_unless(39, wc == 0);
     ;; TODO: wc?
+    if (wc != 0) {
+        ;; not from basechain - return money
+        return send_message_back(s_addr, 0x80000001, query_id, 4, 0, 64);
+    }
 
     var (n1, n2, n3) = (in_msg~load_uint(8), in_msg~load_uint(8), in_msg~load_uint(8));
     in_msg.end_parse();
@@ -136,12 +139,16 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
 ;; sends prize in prev round to addr
 () withdraw_prize(slice s_addr, int query_id) impure {
     (int wc, int addr) = parse_std_addr(s_addr);
-    ;;throw_unless(39, wc == 0);
     ;; TODO: wc?
+    if (wc != 0) {
+        ;; not from basechain - return money
+        return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
+    }
 
     var (round, old_round, comsa, seqno, owner) = load_data();
 
     if (old_round.null?()) {
+        ;; no old_round - return money
         return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
     }
 
@@ -149,6 +156,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     
     var (ms, f) = d~udict_delete_get?(256, addr);
     ifnot (f) {
+        ;; not a winner - return money
         return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
     }
 
