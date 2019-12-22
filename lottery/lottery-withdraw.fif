@@ -18,7 +18,7 @@ file-base +".addr" load-address-verbose 2constant lottery_addr
 file-base +".pk" load-keypair nip constant lottery_pk
 
 // msg_seqno, valid_until, op, dest_addr
-<b seqno 32 u, now timeout + 32 u, 3 32 u, dest_addr addr, b>
+<b seqno 32 u, -1 32 i, 3 32 u, dest_addr addr, b>
 
 dup ."signing message: " <s csr. cr
 dup hashu lottery_pk ed25519_sign_uint
