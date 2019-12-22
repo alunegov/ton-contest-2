@@ -241,12 +241,12 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     ;;   }
     ;;}
 
-    ;; number of winners with 1, 2 and 3 mathced nums
+    ;; number of winners with 1, 2 and 3 matched nums
     int c1 = 0;
     int c2 = 0;
     int c3 = 0;
     
-    ;; dict with winners with addr as key and number of mathced nums as value
+    ;; dict with winners with addr as key and number of matched nums as value
     cell d = new_dict();
 
     int i = -1;
@@ -456,7 +456,7 @@ cell lucky_nums() method_id {
     return (p1, p2, p3, d);
 }
 
-;; returns prize in prev round for addr (imply wc = 0)
+;; return prize in prev round for addr (implys wc = 0)
 int is_winner(int addr) method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {
