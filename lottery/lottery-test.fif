@@ -35,7 +35,7 @@ drop  // storage
 
 // storage exp_prize_find - 
 {
-."    expecting prize_fund " dup . cr
+."    expecting prize_fund " dup .GR cr
 79045 code 3 roll c7 runvmctx
 drop  // storage
 ."Exit code " dup . cr abort"FAIL exit_code"
@@ -228,14 +228,20 @@ recv_internal code storage c7 runvmctx
 ."Updated storage: " cr dup =: storage <s csr. cr
 ."Exit code " dup . cr abort"FAIL exit_code"
 
-storage 81540000000 check_prize_fund
+."buy ticket 3_p3 from simple transfer with comment" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+1 Gram* <b b{0000} s, b{100} s, 0 8 u, 3 256 u, b> <b 0 32 u, "0 1 2" $, b> <s
+recv_internal code storage c7 runvmctx
+."Updated storage: " cr dup =: storage <s csr. cr
+."Exit code " dup . cr abort"FAIL exit_code"
 
+storage 82540000000 check_prize_fund
 
 cr
 
 lottery_addr .addr cr
 // lottery_addr 6 .Addr cr
 
-"0" =: comment
+" 0123456789" =: comment
 comment simple-transfer-body
 <s csr.

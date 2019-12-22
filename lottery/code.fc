@@ -72,6 +72,8 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
 
 ;; register participant in current round ("sell" ticket)
 () buy_ticket(slice s_addr, int msg_value, slice in_msg, int query_id) impure {
+    ;;in_msg~dump();
+
     ;; ticket price is GR$1
     if (msg_value < 1000000000) {
         ;; not enough money to buy a ticket - return money
@@ -122,6 +124,37 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     ;; TODO: confirmation?
 
     return ();
+}
+
+;; parses transfer comment for 3 nums (expected input is 3 nums 0-99 separated with space)
+;; nums, ok
+(cell, int) comment_to_nums(slice in_msg) {
+    builder nums = begin_cell();
+
+    int comment_len = slice_bits(in_msg) / 8;
+    int nums_count = 0;
+    var l = nil;
+    do {
+        int char = 0x20;
+        ifnot (in_msg.slice_empty?()) {
+            char = in_msg~load_uint(8);
+        }
+        if (char == 0x20) {
+            int num = 0;
+            int order = 1;
+            do {
+                (int n, l) = l.uncons();
+                num += (n - 0x30) * order;
+                order *= 10;
+            } until (l.null?());
+            nums~store_uint(num, 8);
+            nums_count += 1;
+        } else {
+            l = cons(char, l);
+        }
+    } until (nums_count == 3);
+
+    return (nums.end_cell(), true);
 }
 
 ;; increase prize fund in current round
@@ -298,9 +331,14 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     int op = in_msg~load_uint(32);
 
     if (op == 0) {
-        ;; simple transfer with comment - accept money
-        ;; TODO: buy ticket with nums from comment (str -> 3 nums)
-        return ();
+        ;; simple transfer with comment - buy ticket with nums from comment (str -> 3 nums)
+        ;; if except while parsing - will return msg/money
+        (cell nums, int ok) = comment_to_nums(in_msg);
+        ifnot (ok) {
+            ;; comment parse err - just accept money
+            return ();
+        }
+        return buy_ticket(s_addr, msg_value, nums.begin_parse(), 0);
     }
 
     ;; TODO: query_id: int64
@@ -413,7 +451,7 @@ cell lucky_nums() method_id {
     return (p1, p2, p3, d);
 }
 
-;; returns prize in prev round for addr
+;; returns prize in prev round for addr (imply wc = 0)
 int is_winner(int addr) method_id {
     cell old_round = get_data().begin_parse().skip_dict().preload_dict();
     if (old_round.null?()) {

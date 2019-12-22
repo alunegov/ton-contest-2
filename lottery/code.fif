@@ -8,6 +8,7 @@ PROGRAM{
   DECLPROC pack_old_round
   DECLPROC send_message_back
   DECLPROC buy_ticket
+  DECLPROC comment_to_nums
   DECLPROC sponsor_prize_fund
   DECLPROC withdraw_prize
   DECLPROC conduct_round
@@ -214,6 +215,63 @@ PROGRAM{
     }>ELSE<{
       3 BLKDROP	// 
     }>
+  }>
+  comment_to_nums PROC:<{
+    //  in_msg
+    NEWC	//  in_msg nums
+    0 PUSHINT	//  in_msg nums nums_count=0
+    PUSHNULL	//  in_msg nums nums_count=0 l
+    UNTIL:<{
+      32 PUSHINT	//  in_msg nums nums_count l char=32
+      s4 PUSH	//  in_msg nums nums_count l char=32 in_msg
+      SEMPTY	//  in_msg nums nums_count l char=32 _13
+      IFNOT:<{	//  in_msg nums nums_count l char=32
+        DROP	//  in_msg nums nums_count l
+        s0 s3 XCHG	//  l nums nums_count in_msg
+        8 LDU	//  l nums nums_count char in_msg
+      }>ELSE<{
+        s0 s4 XCHG2	//  l nums nums_count char in_msg
+      }>
+      OVER	//  l nums nums_count char in_msg char
+      32 EQINT	//  l nums nums_count char in_msg _18
+      IF:<{	//  l nums nums_count char in_msg
+        NIP	//  l nums nums_count in_msg
+        0 PUSHINT	//  l nums nums_count in_msg num=0
+        1 PUSHINT	//  l nums nums_count in_msg num=0 order=1
+        UNTIL:<{
+          s0 s5 XCHG	//  order nums nums_count in_msg num l
+          UNCONS	//  order nums nums_count in_msg num n l
+          SWAP	//  order nums nums_count in_msg num l n
+          -48 ADDCONST	//  order nums nums_count in_msg num l _26
+          s6 PUSH	//  order nums nums_count in_msg num l _26 order
+          MUL	//  order nums nums_count in_msg num l _27
+          s1 s2 XCHG	//  order nums nums_count in_msg l num _27
+          ADD	//  order nums nums_count in_msg l num
+          s0 s5 XCHG	//  num nums nums_count in_msg l order
+          10 MULCONST	//  num nums nums_count in_msg l order
+          OVER	//  num nums nums_count in_msg l order l
+          ISNULL	//  num nums nums_count in_msg l order _31
+          s2 s6 XCHG	//  l nums nums_count in_msg num order _31
+        }>	//  l nums nums_count in_msg num order
+        DROP	//  l nums nums_count in_msg num
+        s0 s3 XCHG2	//  l in_msg nums_count num nums
+        8 STU	//  l in_msg nums_count nums
+        SWAP	//  l in_msg nums nums_count
+        INC	//  l in_msg nums nums_count
+      }>ELSE<{	//  l nums nums_count char in_msg
+        s0 s4 XCHG	//  in_msg nums nums_count char l
+        CONS	//  in_msg nums nums_count l
+        3 -ROLL	//  l in_msg nums nums_count
+      }>
+      DUP	//  l in_msg nums nums_count nums_count
+      3 EQINT	//  l in_msg nums nums_count _39
+      s3 s4 XCHG
+      s1 s3 s0 XCHG3	//  in_msg nums nums_count l _39
+    }>	//  in_msg nums nums_count l
+    s2 s3 XCHG
+    3 BLKDROP	//  nums
+    ENDC	//  _40
+    TRUE	//  _40 _41
   }>
   sponsor_prize_fund PROC:<{
     //  msg_value
@@ -500,7 +558,7 @@ PROGRAM{
     SWAP	//  msg_value in_msg in_msg_cell
     CTOS	//  msg_value in_msg cs
     4 LDU	//  msg_value in_msg flags cs
-    LDMSGADDR	//  msg_value in_msg flags _47 _46
+    LDMSGADDR	//  msg_value in_msg flags _53 _52
     DROP	//  msg_value in_msg flags s_addr
     SWAP
     1 PUSHINT	//  msg_value in_msg s_addr flags _12=1
@@ -516,18 +574,26 @@ PROGRAM{
     OVER	//  msg_value s_addr op in_msg op
     0 EQINT	//  msg_value s_addr op in_msg _21
     IFJMP:<{	//  msg_value s_addr op in_msg
-      4 BLKDROP	// 
-    }>	//  msg_value s_addr op in_msg
-    OVER	//  msg_value s_addr op in_msg op
-    1 EQINT	//  msg_value s_addr op in_msg _23
-    IFJMP:<{	//  msg_value s_addr op in_msg
       NIP	//  msg_value s_addr in_msg
+      comment_to_nums CALLDICT	//  msg_value s_addr nums ok
+      IFNOTJMP:<{	//  msg_value s_addr nums
+        3 BLKDROP	// 
+      }>	//  msg_value s_addr nums
+      CTOS	//  msg_value s_addr _25
       s1 s2 XCHG
-      0 PUSHINT	//  s_addr msg_value in_msg _24=0
+      0 PUSHINT	//  s_addr msg_value _25 _26=0
       buy_ticket CALLDICT
     }>	//  msg_value s_addr op in_msg
     OVER	//  msg_value s_addr op in_msg op
-    2 EQINT	//  msg_value s_addr op in_msg _27
+    1 EQINT	//  msg_value s_addr op in_msg _29
+    IFJMP:<{	//  msg_value s_addr op in_msg
+      NIP	//  msg_value s_addr in_msg
+      s1 s2 XCHG
+      0 PUSHINT	//  s_addr msg_value in_msg _30=0
+      buy_ticket CALLDICT
+    }>	//  msg_value s_addr op in_msg
+    OVER	//  msg_value s_addr op in_msg op
+    2 EQINT	//  msg_value s_addr op in_msg _33
     IFJMP:<{	//  msg_value s_addr op in_msg
       NIP
       NIP	//  msg_value in_msg
@@ -536,25 +602,25 @@ PROGRAM{
     }>	//  msg_value s_addr op in_msg
     s3 POP	//  in_msg s_addr op
     DUP	//  in_msg s_addr op op
-    3 EQINT	//  in_msg s_addr op _31
+    3 EQINT	//  in_msg s_addr op _37
     IFJMP:<{	//  in_msg s_addr op
       DROP	//  in_msg s_addr
       SWAP	//  s_addr in_msg
       ENDS
-      0 PUSHINT	//  s_addr _33=0
+      0 PUSHINT	//  s_addr _39=0
       withdraw_prize CALLDICT
     }>	//  in_msg s_addr op
     s2 POP	//  op s_addr
     OVER
-    31 PUSHPOW2	//  op s_addr op _37
-    AND	//  op s_addr _38
+    31 PUSHPOW2	//  op s_addr op _43
+    AND	//  op s_addr _44
     IFNOTJMP:<{	//  op s_addr
-      32 PUSHPOW2DEC	//  op s_addr _39=4294967295
-      0 PUSHINT	//  op s_addr _39=4294967295 _40=0
-      DUP	//  op s_addr _39=4294967295 _40=0 _41=0
+      32 PUSHPOW2DEC	//  op s_addr _45=4294967295
+      0 PUSHINT	//  op s_addr _45=4294967295 _46=0
+      DUP	//  op s_addr _45=4294967295 _46=0 _47=0
       s3 s4 XCHG
       s1 s3 s0 XCHG3
-      64 PUSHINT	//  s_addr _39=4294967295 _40=0 op _41=0 _42=64
+      64 PUSHINT	//  s_addr _45=4294967295 _46=0 op _47=0 _48=64
       send_message_back CALLDICT
     }>	//  op s_addr
     2DROP	// 
