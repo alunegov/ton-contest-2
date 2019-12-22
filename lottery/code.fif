@@ -365,28 +365,37 @@ PROGRAM{
     send_message_back CALLDICT
   }>
   conduct_round PROC:<{
-    //  round
-    unpack_round CALLDICT	//  prize_fund participants
+    //  round old_round
+    OVER	//  round old_round round
+    unpack_round CALLDICT	//  round old_round prize_fund participants
+    DUP	//  round old_round prize_fund participants participants
+    ISNULL	//  round old_round prize_fund participants _5
+    IFJMP:<{	//  round old_round prize_fund participants
+      2DROP	//  round old_round
+      0 PUSHINT	//  round old_round _6=0
+    }>	//  round old_round prize_fund participants
+    s2 POP
+    s2 POP	//  prize_fund participants
     LTIME
     ADDRAND
     NEWDICT	//  prize_fund participants lucky_nums
-    NEWC	//  prize_fund participants lucky_nums _8
-    0 PUSHINT	//  prize_fund participants lucky_nums _8 _9=0
+    NEWC	//  prize_fund participants lucky_nums _11
+    0 PUSHINT	//  prize_fund participants lucky_nums _11 _12=0
     ROT
-    8 PUSHINT	//  prize_fund participants _8 _9=0 lucky_nums _10=8
-    DICTUADDB	//  prize_fund participants _149 _150
-    DROP	//  prize_fund participants lucky_nums
-    NEWC	//  prize_fund participants lucky_nums _13
-    1 PUSHINT	//  prize_fund participants lucky_nums _13 _14=1
-    ROT
-    8 PUSHINT	//  prize_fund participants _13 _14=1 lucky_nums _15=8
+    8 PUSHINT	//  prize_fund participants _11 _12=0 lucky_nums _13=8
     DICTUADDB	//  prize_fund participants _151 _152
     DROP	//  prize_fund participants lucky_nums
-    NEWC	//  prize_fund participants lucky_nums _18
-    2 PUSHINT	//  prize_fund participants lucky_nums _18 _19=2
+    NEWC	//  prize_fund participants lucky_nums _16
+    1 PUSHINT	//  prize_fund participants lucky_nums _16 _17=1
     ROT
-    8 PUSHINT	//  prize_fund participants _18 _19=2 lucky_nums _20=8
+    8 PUSHINT	//  prize_fund participants _16 _17=1 lucky_nums _18=8
     DICTUADDB	//  prize_fund participants _153 _154
+    DROP	//  prize_fund participants lucky_nums
+    NEWC	//  prize_fund participants lucky_nums _21
+    2 PUSHINT	//  prize_fund participants lucky_nums _21 _22=2
+    ROT
+    8 PUSHINT	//  prize_fund participants _21 _22=2 lucky_nums _23=8
+    DICTUADDB	//  prize_fund participants _155 _156
     DROP	//  prize_fund participants lucky_nums
     0 PUSHINT	//  prize_fund participants lucky_nums c1=0
     s0 s0 PUSH2	//  prize_fund participants lucky_nums c1=0 c2=0 c3=0
@@ -394,22 +403,22 @@ PROGRAM{
     -1 PUSHINT	//  prize_fund participants lucky_nums c1=0 c2=0 c3=0 d i=-1
     UNTIL:<{
       s6 PUSH
-      8 PUSHPOW2	//  prize_fund participants lucky_nums c1 c2 c3 d i participants _34=256
+      8 PUSHPOW2	//  prize_fund participants lucky_nums c1 c2 c3 d i participants _37=256
       DICTUGETNEXT
       NULLSWAPIFNOT
       NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f
       DUP	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f f
       IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f
         s0 s2 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i nums
-        8 LDU	//  prize_fund participants lucky_nums c1 c2 c3 d f i _41 nums
-        8 LDU	//  prize_fund participants lucky_nums c1 c2 c3 d f i _41 _44 nums
+        8 LDU	//  prize_fund participants lucky_nums c1 c2 c3 d f i _44 nums
+        8 LDU	//  prize_fund participants lucky_nums c1 c2 c3 d f i _44 _47 nums
         8 LDU	//  prize_fund participants lucky_nums c1 c2 c3 d f i n1 n2 n3 nums
         ENDS
         0 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n1 n2 n3 ff=0
         s3 s10 XCPU
-        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 n1 lucky_nums _55=8
+        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 n1 lucky_nums _58=8
         DICTUGET
-        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 _164 _165
+        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 _166 _167
         NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 f1
         IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3
           s2 POP	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 n2
@@ -418,61 +427,61 @@ PROGRAM{
           s0 s2 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 n2 ff
         }>
         s1 s9 XCPU
-        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff n2 lucky_nums _60=8
+        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff n2 lucky_nums _63=8
         DICTUGET
-        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff _166 _167
+        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff _168 _169
         NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff f1
         IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
           INC	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
         }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
         s1 s8 XCPU
-        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 lucky_nums _65=8
+        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 lucky_nums _68=8
         DICTUGET
-        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _168 _169
+        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _170 _171
         NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff f1
         IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
           INC	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
         }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
         DUP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff ff
-        3 EQINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _70
+        3 EQINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _73
         IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
           s0 s4 XCHG	//  prize_fund participants lucky_nums c1 c2 ff d f i c3
           INC	//  prize_fund participants lucky_nums c1 c2 ff d f i c3
-          3 PUSHINT	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _74=3
-          NEWC	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _74=3 _75
-          2 STU	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _77
+          3 PUSHINT	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _77=3
+          NEWC	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _77=3 _78
+          2 STU	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _80
           SWAP
           8 PUSHPOW2
-          s3 s5 s5 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _77 i d _78=256
+          s3 s5 s5 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _80 i d _81=256
           DICTUSETB	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
         }>ELSE<{
           s0 s4 XCHG
           s0 s3 XCHG	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
         }>
         s4 PUSH	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d ff
-        2 EQINT	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d _81
+        2 EQINT	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d _84
         IF:<{	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
           s0 s5 XCHG	//  prize_fund participants lucky_nums c1 d ff c3 f i c2
           INC	//  prize_fund participants lucky_nums c1 d ff c3 f i c2
-          2 PUSHINT	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _85=2
-          NEWC	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _85=2 _86
-          2 STU	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _88
+          2 PUSHINT	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _88=2
+          NEWC	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _88=2 _89
+          2 STU	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _91
           SWAP
           8 PUSHPOW2
-          s3 s7 s7 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _88 i d _89=256
+          s3 s7 s7 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _91 i d _92=256
           DICTUSETB	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
         }>	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
         s0 s4 XCHG	//  prize_fund participants lucky_nums c1 c2 d c3 f i ff
-        1 EQINT	//  prize_fund participants lucky_nums c1 c2 d c3 f i _92
+        1 EQINT	//  prize_fund participants lucky_nums c1 c2 d c3 f i _95
         IF:<{	//  prize_fund participants lucky_nums c1 c2 d c3 f i
           s0 s5 XCHG	//  prize_fund participants lucky_nums i c2 d c3 f c1
           INC	//  prize_fund participants lucky_nums i c2 d c3 f c1
-          1 PUSHINT	//  prize_fund participants lucky_nums i c2 d c3 f c1 _96=1
-          NEWC	//  prize_fund participants lucky_nums i c2 d c3 f c1 _96=1 _97
-          2 STU	//  prize_fund participants lucky_nums i c2 d c3 f c1 _99
+          1 PUSHINT	//  prize_fund participants lucky_nums i c2 d c3 f c1 _99=1
+          NEWC	//  prize_fund participants lucky_nums i c2 d c3 f c1 _99=1 _100
+          2 STU	//  prize_fund participants lucky_nums i c2 d c3 f c1 _102
           SWAP
           8 PUSHPOW2
-          s7 s5 s5 PUXC2	//  prize_fund participants lucky_nums i c2 c1 c3 f _99 i d _100=256
+          s7 s5 s5 PUXC2	//  prize_fund participants lucky_nums i c2 c1 c3 f _102 i d _103=256
           DICTUSETB	//  prize_fund participants lucky_nums i c2 c1 c3 f d
         }>ELSE<{
           s0 s5 XCHG
@@ -485,33 +494,33 @@ PROGRAM{
         DROP	//  prize_fund participants lucky_nums i c2 c1 c3 f d
       }>
       SWAP	//  prize_fund participants lucky_nums i c2 c1 c3 d f
-      NOT	//  prize_fund participants lucky_nums i c2 c1 c3 d _102
+      NOT	//  prize_fund participants lucky_nums i c2 c1 c3 d _105
       s3 s5 XCHG
-      s1 s3 s0 XCHG3	//  prize_fund participants lucky_nums c1 c2 c3 d i _102
+      s1 s3 s0 XCHG3	//  prize_fund participants lucky_nums c1 c2 c3 d i _105
     }>	//  prize_fund participants lucky_nums c1 c2 c3 d i
     DROP
     s5 POP	//  prize_fund d lucky_nums c1 c2 c3
     s5 PUSH	//  prize_fund d lucky_nums c1 c2 c3 prize_fund
-    6 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 _105
-    10 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 _105 _106=10
+    6 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 _108
+    10 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 _108 _109=10
     DIV	//  prize_fund d lucky_nums c1 c2 c3 pf3
     s6 PUSH	//  prize_fund d lucky_nums c1 c2 c3 pf3 prize_fund
-    22 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 _110
-    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 _110 _111=100
+    22 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 _113
+    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 _113 _114=100
     DIV	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2
     s7 PUSH	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 prize_fund
-    15 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 _115
-    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 _115 _116=100
+    15 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 _118
+    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 _118 _119=100
     DIV	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1
     s8 PUSH	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 prize_fund
-    3 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 _120
-    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 _120 _121=100
+    3 MULCONST	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 _123
+    100 PUSHINT	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 _123 _124=100
     DIV	//  prize_fund d lucky_nums c1 c2 c3 pf3 pf2 pf1 comsa
     s9 s9 XCPU	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 prize_fund comsa
     SUB	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund
     0 PUSHINT	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0
     s0 s0 s7 PUSH3	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p2=0 p1=0 c1
-    0 GTINT	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p2=0 p1=0 _132
+    0 GTINT	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p2=0 p1=0 _135
     IF:<{	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p2=0 p1=0
       DROP	//  comsa d lucky_nums c1 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p2=0
       s3 s8 PUXC	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 pf1 c1
@@ -523,7 +532,7 @@ PROGRAM{
       2DROP	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund
     }>
     s6 PUSH	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund c2
-    0 GTINT	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund _136
+    0 GTINT	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund _139
     IF:<{	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund
       s7 POP	//  comsa d lucky_nums next_round_fund c2 c3 pf3 pf2 p1 p3=0
       s2 s5 PUXC	//  comsa d lucky_nums next_round_fund p3=0 c3 pf3 pf2 p1 pf2 c2
@@ -536,7 +545,7 @@ PROGRAM{
       2DROP	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund
     }>
     s3 PUSH	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund c3
-    0 GTINT	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund _140
+    0 GTINT	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund _143
     IF:<{	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund
       s4 POP	//  comsa d lucky_nums p1 next_round_fund c3 pf3 p2
       s1 s2 PUXC	//  comsa d lucky_nums p1 next_round_fund p2 pf3 pf3 c3
@@ -547,7 +556,7 @@ PROGRAM{
       2SWAP
       2DROP	//  comsa d lucky_nums p1 p3 p2 next_round_fund
     }>
-    NEWDICT	//  comsa d lucky_nums p1 p3 p2 next_round_fund _143
+    NEWDICT	//  comsa d lucky_nums p1 p3 p2 next_round_fund _146
     pack_round CALLDICT	//  comsa d lucky_nums p1 p3 p2 round
     s2 s5 XCHG2	//  comsa round lucky_nums p1 p2 p3 d
     pack_old_round CALLDICT	//  comsa round old_round
@@ -668,9 +677,9 @@ PROGRAM{
     s2 PUSH	//  comsa seqno owner old_round op round cs op
     2 EQINT	//  comsa seqno owner old_round op round cs _50
     IF:<{	//  comsa seqno owner old_round op round cs
-      s3 POP	//  comsa seqno owner cs op round
-      s2 PUSH	//  comsa seqno owner cs op round cs
+      DUP	//  comsa seqno owner old_round op round cs cs
       ENDS
+      s0 s3 XCHG	//  comsa seqno owner cs op round old_round
       conduct_round CALLDICT	//  comsa seqno owner cs op round old_round new_comsa
       s1 s7 XCHG	//  old_round seqno owner cs op round comsa new_comsa
       ADD	//  old_round seqno owner cs op round comsa

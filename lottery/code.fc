@@ -218,9 +218,14 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
 }
 
 ;; runs lottery round
-;; round, old_round, comsa
-(cell, cell, int) conduct_round(cell round) {
+;; round, old_round, new_comsa
+(cell, cell, int) conduct_round(cell round, cell old_round) {
     var (prize_fund, participants) = unpack_round(round);
+
+    if (participants.null?()) {
+        ;; no participants - prolong round
+        return (round, old_round, 0);
+    }
 
     randomize_lt();
 
@@ -312,7 +317,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     round = pack_round(next_round_fund, new_dict());
 
     ;; form result of current round - prev round
-    cell old_round = pack_old_round(lucky_nums, p1, p2, p3, d);
+    old_round = pack_old_round(lucky_nums, p1, p2, p3, d);
 
     return (round, old_round, comsa);
 }
@@ -392,7 +397,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     if (op == 2) {
         ;; conduct round
         cs.end_parse();
-        (round, old_round, int new_comsa) = conduct_round(round);
+        (round, old_round, int new_comsa) = conduct_round(round, old_round);
         comsa += new_comsa;
     }
     if (op == 3) {

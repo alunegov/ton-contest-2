@@ -237,6 +237,31 @@ recv_internal code storage c7 runvmctx
 
 storage 82540000000 check_prize_fund
 
+."conduct round" cr
+// msg_seqno, valid_until, op
+<b 2 32 u, -1 32 i, 2 32 u, b>
+dup hashu lottery_pk ed25519_sign_uint
+<b swap B, swap <s s, b> <s
+recv_external code storage c7 runvmctx
+."Updated storage: " cr dup =: storage <s csr. cr
+."Exit code " dup . cr abort"FAIL exit_code"
+
+storage 30539800000 check_prize_fund
+storage comsa
+
+."conduct round with no participants - prolong round" cr
+// msg_seqno, valid_until, op
+<b 3 32 u, -1 32 i, 2 32 u, b>
+dup hashu lottery_pk ed25519_sign_uint
+<b swap B, swap <s s, b> <s
+recv_external code storage c7 runvmctx
+."Updated storage: " cr dup =: storage <s csr. cr
+."Exit code " dup . cr abort"FAIL exit_code"
+
+storage 30539800000 check_prize_fund
+storage comsa
+
+
 cr
 
 lottery_addr .addr cr
