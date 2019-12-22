@@ -351,12 +351,9 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
         slice dest_addr_s = cs~load_bits(8 + 256);
         cs.end_parse();
 
-        ;; TODO: withdraw without limitations?
-        ;; if greater GR$1
-        if (comsa > 1000000000) {
-            send_message_back(dest_addr_s, 0x80000013, 0, -1, comsa, 2);
-            comsa = 0;
-        }
+        ;; send all comsa
+        send_message_back(dest_addr_s, 0x80000013, 0, -1, comsa, 2);
+        comsa = 0;
     }
     ;; 9 - op for init
     save_data(round, old_round, comsa, seqno + 1, owner);
