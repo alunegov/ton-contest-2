@@ -218,6 +218,18 @@ storage winners
 storage prize_fund
 storage comsa
 
+// only works in debug non-random lucky_nums mode (0, 1, 2)
+storage 80540000000 check_prize_fund
+
+."buy ticket 3_p2 with change" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
+recv_internal code storage c7 runvmctx
+."Updated storage: " cr dup =: storage <s csr. cr
+."Exit code " dup . cr abort"FAIL exit_code"
+
+storage 81540000000 check_prize_fund
+
 
 cr
 
