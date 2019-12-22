@@ -191,10 +191,12 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     ;;   }
     ;;}
 
+    ;; number of winners with 1, 2 and 3 mathced nums
     int c1 = 0;
     int c2 = 0;
     int c3 = 0;
-
+    
+    ;; dict with winners with addr as key and number of mathced nums as value
     cell d = new_dict();
 
     int i = -1;
@@ -244,6 +246,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
 
     int next_round_fund = prize_fund - comsa;
 
+    ;; prize for each winner with 1, 2 and 3 matched nums
     int p3 = 0;
     int p2 = 0;
     int p1 = 0;
@@ -260,10 +263,10 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
         next_round_fund -= pf3;
     }
 
-    ;; reset next current round
+    ;; reset "next current" round
     round = pack_round(next_round_fund, new_dict());
 
-    ;; form result of current round (prev round)
+    ;; form result of current round - prev round
     cell old_round = pack_old_round(lucky_nums, p1, p2, p3, d);
 
     return (round, old_round, comsa);
@@ -426,7 +429,7 @@ int is_winner(int addr) method_id {
     return 0;
 }
 
-;; returns commision
+;; returns commision. debug only?
 int comsa() method_id {
     return get_data().begin_parse().skip_dict().skip_dict().preload_grams();
 }
