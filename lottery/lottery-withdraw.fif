@@ -1,5 +1,12 @@
 "TonUtil.fif" include
 
+{ ."usage: " @' $0 type ." <filename-base> <seqno> <dest-addr> [<savefile>]" cr
+  ."Creates a commision withdraw requrest to lottery created by lottery-new.fif with private key loaded from" cr
+  ."<filename-base>.pk and address from <filename-base>.addr. Commision will be sent to address <dest-addr> (prefix" cr
+  ."with '@' to load address from file). Saves it to <savefile>.boc ('lottery-conduct-query' by default)" cr 1 halt
+} : usage
+$# dup 3 < swap 4 > or ' usage if
+
 120 =: timeout   // external message expires in 120 seconds
 
 $1 =: file-base

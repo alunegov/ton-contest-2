@@ -1,12 +1,18 @@
 "TonUtil.fif" include
 
+{ ."usage: " @' $0 type ." n1 n2 n3 [<savefile>]" cr
+  ."The result is saved into <savefile> ('lotto-buy-payload.boc' by default) and output in hexadecimal form, to be" cr
+  ."sent later as the body of a message from the wallet of participant to lottery contract, along with a ticket price" cr
+  ."value (1 Gram) to buy a ticket with 3 nums 0-99" cr 1 halt
+} : usage
+$# dup 3 < swap 4 > or ' usage if
+
 $1 parse-int =: n1
 $2 parse-int =: n2
 $3 parse-int =: n3
-
-"lotto-buy-payload.boc" =: output_fname
+def? $4 { @' $4 } { "lotto-buy-payload" } cond constant output_fname
 
 <b 1 32 u, n1 8 u, n2 8 u, n3 8 u, b>
 cr ."Message body is " dup <s csr. cr
 
-2 boc+>B output_fname tuck B>file ."Saved to file " type cr
+2 boc+>B output_fname +".boc" tuck B>file ."Saved to file " type cr

@@ -1,4 +1,5 @@
 "TonUtil.fif" include
+"Asm.fif" include
 
 { ."usage: " @' $0 type ." <workchain-id> [<filename-base>]" cr
   ."Creates a new lottery in specified workchain, with private key saved to or loaded from <filename-base>.pk" cr

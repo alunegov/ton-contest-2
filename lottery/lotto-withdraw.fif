@@ -1,7 +1,15 @@
+"TonUtil.fif" include
 
-"lotto-withdraw-payload.boc" =: output_fname
+{ ."usage: " @' $0 type ." [<savefile>]" cr
+  ."The result is saved into <savefile> ('lotto-withdraw-payload.boc' by default) and output in hexadecimal form, to be" cr
+  ."sent later as the body of a message from the wallet of participant to lottery contract, along with a small value to" cr
+  ."withdraw a prize from prev lottery round" cr 1 halt
+} : usage
+$# dup 0 < swap 1 > or ' usage if
+
+def? $4 { @' $4 } { "lotto-withdraw-payload" } cond constant output_fname
 
 <b 3 32 u, b>
 cr ."Message body is " dup <s csr. cr
 
-2 boc+>B output_fname tuck B>file ."Saved to file " type cr
+2 boc+>B output_fname +".boc" tuck B>file ."Saved to file " type cr
