@@ -230,16 +230,16 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     randomize_lt();
 
     cell lucky_nums = new_dict();
-    lucky_nums~udict_add_builder?(8, 0, begin_cell());
-    lucky_nums~udict_add_builder?(8, 1, begin_cell());
-    lucky_nums~udict_add_builder?(8, 2, begin_cell());
-    ;;int i = 0;
-    ;;while (i < 13) {
-    ;;    int f = lucky_nums~udict_add_builder?(8, rand(100), begin_cell());
-    ;;    if (f) {
-    ;;        i += 1;
-    ;;   }
-    ;;}
+    ;;lucky_nums~udict_add_builder?(8, 0, begin_cell());
+    ;;lucky_nums~udict_add_builder?(8, 1, begin_cell());
+    ;;lucky_nums~udict_add_builder?(8, 2, begin_cell());
+    int i = 0;
+    while (i < 13) {
+        int f = lucky_nums~udict_add_builder?(8, rand(100), begin_cell());
+        if (f) {
+            i += 1;
+       }
+    }
 
     ;; number of winners with 1, 2 and 3 matched nums
     int c1 = 0;
