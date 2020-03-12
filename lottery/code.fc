@@ -234,6 +234,7 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     randomize_lt();
 
     cell lucky_nums = new_dict();
+    ;; DEBUG ONLY
     ;;lucky_nums~udict_add_builder?(8, 0, begin_cell());
     ;;lucky_nums~udict_add_builder?(8, 1, begin_cell());
     ;;lucky_nums~udict_add_builder?(8, 2, begin_cell());
@@ -389,15 +390,16 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
     throw_unless(33, msg_seqno == seqno);
     throw_unless(34, check_signature(slice_hash(in_msg), signature, owner));
     accept_message();
-    if (op == 1) {
-        ;; transfer. debug only
-        cs~touch();
-        while (cs.slice_refs()) {
-            int mode = cs~load_uint(8);
-            send_raw_message(cs~load_ref(), mode);
-        }
-        cs.end_parse();
-    }
+    ;; DEBUG ONLY
+    ;;if (op == 1) {
+    ;;    ;; transfer
+    ;;    cs~touch();
+    ;;    while (cs.slice_refs()) {
+    ;;        int mode = cs~load_uint(8);
+    ;;        send_raw_message(cs~load_ref(), mode);
+    ;;    }
+    ;;    cs.end_parse();
+    ;;}
     if (op == 2) {
         ;; conduct round
         cs.end_parse();
