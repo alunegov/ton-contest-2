@@ -94,6 +94,10 @@ cell pack_old_round(cell lucky_nums, int p1, int p2, int p3, cell d) {
         ;; got non-unique nums - return money
         return send_message_back(s_addr, 0x80000001, query_id, 2, 0, 64);
     }
+    if ((n1 >= 100) | (n2 >= 100) | (n3 >= 100)) {
+        ;; got out-of-range 0-99 nums - return money
+        return send_message_back(s_addr, 0x80000001, query_id, 5, 0, 64);
+    }
 
     var (round, old_round, comsa, seqno, owner) = load_data();
 
