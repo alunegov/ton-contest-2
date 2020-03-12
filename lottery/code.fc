@@ -98,8 +98,12 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
 
     var (prize_fund, participants) = unpack_round(round);
 
-    (cell wc_participants, int f) = participants.idict_get_ref?(8, wc);
-    ifnot (f) {
+    (slice wc_participants_s, int f) = participants.idict_get?(8, wc);
+    cell wc_participants = null(); 
+    if (f) {
+        wc_participants = wc_participants_s~load_dict();
+        wc_participants_s.end_parse();
+    } else {
         wc_participants = new_dict();
     }
 
@@ -108,14 +112,14 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
         .store_uint(n2, 8)
         .store_uint(n3, 8);
 
-    f = wc_participants~udict_add_builder?(256, addr, nums);
+    int f = wc_participants~udict_add_builder?(256, addr, nums);
     ifnot (f) {
         ;; addr already bought a ticket - return money (for now one addr - one ticket)
         return send_message_back(s_addr, 0x80000001, query_id, 3, 0, 64);
     }
 
-    participants~idict_set_ref(8, wc, wc_participants);
-    
+    participants~idict_set_builder(8, wc, begin_cell().store_dict(wc_participants));
+
     ;; increase prize fund by ticket price
     ;; TODO: gas?
     round = pack_round(prize_fund + 1000000000, participants);
@@ -192,11 +196,14 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
 
     var (lucky_nums, prize1, prize2, prize3, winners) = unpack_old_round(old_round);
     
-    (cell wc_winners, int f) = winners.idict_get_ref?(8, wc);
+    (slice wc_winners_s, int f) = winners.idict_get?(8, wc);
     ifnot (f) {
         ;; not a winner by wc - return money
         return send_message_back(s_addr, 0xfffffffe, query_id, -1, 0, 64);
     }
+
+    cell wc_winners = wc_winners_s~load_dict();
+    wc_winners_s.end_parse();
 
     (slice matched_nums_s, f) = wc_winners~udict_delete_get?(256, addr);
     ifnot (f) {
@@ -208,10 +215,10 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
     matched_nums_s.end_parse();
 
     ifnot (wc_winners.dict_empty?()) {
-        winners~idict_set_ref(8, wc, wc_winners);
+        winners~idict_set_builder(8, wc, begin_cell().store_dict(wc_winners));
     } else {
         ;; remove empty wc
-        winners~idict_delete(8, wc);
+        (winners, _) = winners.idict_delete?(8, wc);
     }
 
     cell old_round = pack_old_round(lucky_nums, prize1, prize2, prize3, winners);
@@ -245,16 +252,16 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
 
     cell lucky_nums = new_dict();
     ;; DEBUG ONLY
-    ;;lucky_nums~udict_add_builder?(8, 0, begin_cell());
-    ;;lucky_nums~udict_add_builder?(8, 1, begin_cell());
-    ;;lucky_nums~udict_add_builder?(8, 2, begin_cell());
-    int i = 0;
-    while (i < 13) {
-        int f = lucky_nums~udict_add_builder?(8, rand(100), begin_cell());
-        if (f) {
-            i += 1;
-       }
-    }
+    lucky_nums~udict_add_builder?(8, 0, begin_cell());
+    lucky_nums~udict_add_builder?(8, 1, begin_cell());
+    lucky_nums~udict_add_builder?(8, 2, begin_cell());
+    ;;int i = 0;
+    ;;while (i < 13) {
+    ;;    int f = lucky_nums~udict_add_builder?(8, rand(100), begin_cell());
+    ;;    if (f) {
+    ;;        i += 1;
+    ;;   }
+    ;;}
 
     ;; number of winners with 1, 2 and 3 matched nums
     int winners_count1 = 0;
@@ -264,8 +271,11 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
     ;; dict with winners with wc as key and dict of addrs as value
     cell winners = new_dict();
 
-    (int wc, cell wc_participants, int wc_f) = participants.idict_get_min_ref?(8, wc);
+    (int wc, slice wc_participants_s, int wc_f) = participants.idict_get_min?(8);
     while (wc_f) {
+        cell wc_participants = wc_participants_s~load_dict();
+        wc_participants_s.end_parse();
+
         ;; dict with winners in wc with addr as key and number of matched nums as value
         cell wc_winners = new_dict();
 
@@ -311,8 +321,9 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3, cell wi
             winners~idict_set_builder(8, wc, begin_cell().store_dict(wc_winners));
         }
 
-        (wc, wc_participants, wc_f) = participants.idict_get_next_ref?(8, wc);
-    } until (~ wc_f);
+        (wc, wc_participants_s, wc_f) = participants.idict_get_next?(8, wc);
+        ;;wc_participants = wc_participants_s~load_dict();
+    }
 
     int pf3 = prize_fund * 6 / 10;
     int pf2 = prize_fund * 22 / 100;
@@ -498,12 +509,15 @@ int is_winner(int wc, int addr) method_id {
     var (prize1, prize2, prize3, winners) = (ds~load_grams(), ds~load_grams(), ds~load_grams(), ds~load_dict());
     ;;ds.end_parse();
 
-    (cell wc_winners, int f) = winners.idict_get_ref?(8, wc);
+    (slice wc_winners_s, int f) = winners.idict_get?(8, wc);
     ifnot (f) {
         return 0;
     }
 
-    (slice matched_nums_s, f) = wc_winners.udict_get?(256, addr);
+    cell wc_winners = wc_winners_s~load_dict();
+    ;;wc_winners_s.end_parse();
+
+    (slice matched_nums_s, int f) = wc_winners.udict_get?(256, addr);
     if (f) {
         int matched_nums = matched_nums_s.preload_uint(2);
         if (matched_nums == 1) {
@@ -515,6 +529,7 @@ int is_winner(int wc, int addr) method_id {
         if (matched_nums == 3) {
             return prize3;
         }
+        return 0;
     }
 
     return 0;
