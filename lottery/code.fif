@@ -33,8 +33,8 @@ PROGRAM{
   }>
   save_data PROC:<{
     //  round old_round comsa seqno owner
-    NEWC	//  round old_round comsa seqno owner _5
-    s1 s5 XCHG	//  owner old_round comsa seqno round _5
+    s0 s4 XCHG
+    NEWC	//  owner old_round comsa seqno round _5
     STDICT	//  owner old_round comsa seqno _6
     s1 s3 XCHG	//  owner seqno comsa old_round _6
     STDICT	//  owner seqno comsa _7
@@ -61,7 +61,7 @@ PROGRAM{
   }>
   pack_round PROC:<{
     //  prize_fund participants
-    NEWC	//  prize_fund participants _2
+    NEWC
     ROT	//  participants _2 prize_fund
     STGRAMS	//  participants _3
     STDICT	//  _4
@@ -79,8 +79,8 @@ PROGRAM{
   }>
   pack_old_round PROC:<{
     //  lucky_nums p1 p2 p3 d
-    NEWC	//  lucky_nums p1 p2 p3 d _5
-    s1 s5 XCHG	//  d p1 p2 p3 lucky_nums _5
+    s0 s4 XCHG
+    NEWC	//  d p1 p2 p3 lucky_nums _5
     STDICT	//  d p1 p2 p3 _6
     s0 s3 XCHG2	//  d p3 p2 _6 p1
     STGRAMS	//  d p3 p2 _7
@@ -124,11 +124,10 @@ PROGRAM{
     LESS	//  s_addr msg_value in_msg query_id _5
     IFJMP:<{	//  s_addr msg_value in_msg query_id
       NIP
-      NIP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _6=2147483649
-      1 PUSHINT	//  s_addr query_id _6=2147483649 _7=1
-      0 PUSHINT	//  s_addr query_id _6=2147483649 _7=1 _8=0
-      s2 s3 XCHG
+      2147483649 PUSHINT
+      s2 POP
+      1 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _6=2147483649 query_id _7=1 _8=0 _9=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value in_msg query_id
@@ -137,12 +136,12 @@ PROGRAM{
     SWAP	//  s_addr msg_value in_msg query_id addr wc
     0 NEQINT	//  s_addr msg_value in_msg query_id addr _15
     IFJMP:<{	//  s_addr msg_value in_msg query_id addr
-      s1 s3 XCHG
-      3 BLKDROP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _16=2147483649
-      4 PUSHINT	//  s_addr query_id _16=2147483649 _17=4
-      0 PUSHINT	//  s_addr query_id _16=2147483649 _17=4 _18=0
-      s2 s3 XCHG
+      DROP
+      NIP
+      2147483649 PUSHINT
+      s2 POP
+      4 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _16=2147483649 query_id _17=4 _18=0 _19=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value in_msg query_id addr
@@ -160,57 +159,75 @@ PROGRAM{
     EQUAL	//  s_addr msg_value addr query_id n1 n2 n3 _36 _37
     OR	//  s_addr msg_value addr query_id n1 n2 n3 _38
     IFJMP:<{	//  s_addr msg_value addr query_id n1 n2 n3
-      s3 s5 XCHG
-      5 BLKDROP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _39=2147483649
-      2 PUSHINT	//  s_addr query_id _39=2147483649 _40=2
-      0 PUSHINT	//  s_addr query_id _39=2147483649 _40=2 _41=0
-      s2 s3 XCHG
+      s3 s4 XCHG
+      4 BLKDROP
+      2147483649 PUSHINT
+      s2 POP
+      2 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _39=2147483649 query_id _40=2 _41=0 _42=64
+      send_message_back CALLDICT
+    }>	//  s_addr msg_value addr query_id n1 n2 n3
+    s2 PUSH	//  s_addr msg_value addr query_id n1 n2 n3 n1
+    99 GTINT	//  s_addr msg_value addr query_id n1 n2 n3 _45
+    s2 PUSH	//  s_addr msg_value addr query_id n1 n2 n3 _45 n2
+    99 GTINT	//  s_addr msg_value addr query_id n1 n2 n3 _45 _47
+    OR	//  s_addr msg_value addr query_id n1 n2 n3 _48
+    OVER	//  s_addr msg_value addr query_id n1 n2 n3 _48 n3
+    99 GTINT	//  s_addr msg_value addr query_id n1 n2 n3 _48 _50
+    OR	//  s_addr msg_value addr query_id n1 n2 n3 _51
+    IFJMP:<{	//  s_addr msg_value addr query_id n1 n2 n3
+      s3 s4 XCHG
+      4 BLKDROP
+      2147483649 PUSHINT
+      s2 POP
+      5 PUSHINT
+      0 PUSHINT
+      64 PUSHINT	//  s_addr _52=2147483649 query_id _53=5 _54=0 _55=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value addr query_id n1 n2 n3
     load_data CALLDICT	//  s_addr msg_value addr query_id n1 n2 n3 round old_round comsa seqno owner
     s0 s4 XCHG	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno round
     unpack_round CALLDICT	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno prize_fund participants
-    NEWC	//  s_addr msg_value addr query_id n1 n2 n3 owner old_round comsa seqno prize_fund participants _54
-    s1 s9 XCHG	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund n1 _54
-    8 STU	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund _56
-    s1 s7 XCHG	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno n2 _56
-    8 STU	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno _58
-    s1 s5 XCHG	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa n3 _58
+    s0 s8 XCHG
+    NEWC	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund n1 _67
+    8 STU	//  s_addr msg_value addr query_id participants n2 n3 owner old_round comsa seqno prize_fund _69
+    s1 s7 XCHG	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno n2 _69
+    8 STU	//  s_addr msg_value addr query_id participants prize_fund n3 owner old_round comsa seqno _71
+    s1 s5 XCHG	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa n3 _71
     8 STU	//  s_addr msg_value addr query_id participants prize_fund seqno owner old_round comsa nums
     s0 s8 s6 XCHG3
-    8 PUSHPOW2	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner nums addr participants _63=256
+    8 PUSHPOW2	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner nums addr participants _76=256
     DICTUADDB	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants f
     IFNOTJMP:<{	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants
-      s5 s7 XCHG
-      7 BLKDROP	//  s_addr query_id
-      2147483649 PUSHINT	//  s_addr query_id _65=2147483649
-      3 PUSHINT	//  s_addr query_id _65=2147483649 _66=3
-      0 PUSHINT	//  s_addr query_id _65=2147483649 _66=3 _67=0
-      s2 s3 XCHG
-      64 PUSHINT	//  s_addr _65=2147483649 query_id _66=3 _67=0 _68=64
+      s5 s6 XCHG
+      6 BLKDROP
+      2147483649 PUSHINT
+      s2 POP
+      3 PUSHINT
+      0 PUSHINT
+      64 PUSHINT	//  s_addr _78=2147483649 query_id _79=3 _80=0 _81=64
       send_message_back CALLDICT
     }>	//  s_addr msg_value comsa query_id old_round prize_fund seqno owner participants
     s0 s3 XCHG
-    1000000000 PUSHINT	//  s_addr msg_value comsa query_id old_round participants seqno owner prize_fund _70=1000000000
-    ADD	//  s_addr msg_value comsa query_id old_round participants seqno owner _71
-    s0 s3 XCHG2	//  s_addr msg_value comsa query_id old_round owner seqno _71 participants
+    1000000000 PUSHINT	//  s_addr msg_value comsa query_id old_round participants seqno owner prize_fund _83=1000000000
+    ADD	//  s_addr msg_value comsa query_id old_round participants seqno owner _84
+    s0 s3 XCHG2	//  s_addr msg_value comsa query_id old_round owner seqno _84 participants
     pack_round CALLDICT	//  s_addr msg_value comsa query_id old_round owner seqno round
-    s5 s1 s4 XCHG3
-    s0 s5 XCHG	//  s_addr msg_value query_id round old_round comsa seqno owner
+    s0 s4 XCHG
+    s5 s1 s5 XCHG3	//  s_addr msg_value query_id round old_round comsa seqno owner
     save_data CALLDICT
     OVER
-    1000000000 PUSHINT	//  s_addr msg_value query_id msg_value _74=1000000000
-    GREATER	//  s_addr msg_value query_id _75
+    1000000000 PUSHINT	//  s_addr msg_value query_id msg_value _87=1000000000
+    GREATER	//  s_addr msg_value query_id _88
     IF:<{	//  s_addr msg_value query_id
-      20 PUSHINT	//  s_addr msg_value query_id _76=20
-      0 PUSHINT	//  s_addr msg_value query_id _76=20 _77=0
+      20 PUSHINT	//  s_addr msg_value query_id _89=20
+      0 PUSHINT	//  s_addr msg_value query_id _89=20 _90=0
       s0 s3 XCHG
-      1000000000 PUSHINT	//  s_addr _77=0 query_id _76=20 msg_value _78=1000000000
-      SUB	//  s_addr _77=0 query_id _76=20 _79
+      1000000000 PUSHINT	//  s_addr _90=0 query_id _89=20 msg_value _91=1000000000
+      SUB	//  s_addr _90=0 query_id _89=20 _92
       s1 s3 XCHG
-      2 PUSHINT	//  s_addr _76=20 query_id _77=0 _79 _80=2
+      2 PUSHINT	//  s_addr _89=20 query_id _90=0 _92 _93=2
       send_message_back CALLDICT
     }>ELSE<{
       3 BLKDROP	// 
@@ -229,43 +246,41 @@ PROGRAM{
         DROP	//  in_msg nums nums_count l
         s0 s3 XCHG	//  l nums nums_count in_msg
         8 LDU	//  l nums nums_count char in_msg
-      }>ELSE<{
-        s0 s4 XCHG2	//  l nums nums_count char in_msg
-      }>
-      OVER	//  l nums nums_count char in_msg char
-      32 EQINT	//  l nums nums_count char in_msg _18
-      IF:<{	//  l nums nums_count char in_msg
-        NIP	//  l nums nums_count in_msg
-        0 PUSHINT	//  l nums nums_count in_msg num=0
-        1 PUSHINT	//  l nums nums_count in_msg num=0 order=1
+        s4 s4 XCHG2	//  in_msg nums nums_count l char
+      }>	//  in_msg nums nums_count l char
+      DUP	//  in_msg nums nums_count l char char
+      32 EQINT	//  in_msg nums nums_count l char _18
+      IF:<{	//  in_msg nums nums_count l char
+        DROP	//  in_msg nums nums_count l
+        0 PUSHINT	//  in_msg nums nums_count l num=0
+        1 PUSHINT	//  in_msg nums nums_count l num=0 order=1
         UNTIL:<{
-          s0 s5 XCHG	//  order nums nums_count in_msg num l
-          UNCONS	//  order nums nums_count in_msg num n l
-          SWAP	//  order nums nums_count in_msg num l n
-          -48 ADDCONST	//  order nums nums_count in_msg num l _26
-          s6 PUSH	//  order nums nums_count in_msg num l _26 order
-          MUL	//  order nums nums_count in_msg num l _27
-          s1 s2 XCHG	//  order nums nums_count in_msg l num _27
-          ADD	//  order nums nums_count in_msg l num
-          s0 s5 XCHG	//  num nums nums_count in_msg l order
-          10 MULCONST	//  num nums nums_count in_msg l order
-          OVER	//  num nums nums_count in_msg l order l
-          ISNULL	//  num nums nums_count in_msg l order _31
-          s2 s6 XCHG	//  l nums nums_count in_msg num order _31
-        }>	//  l nums nums_count in_msg num order
-        DROP	//  l nums nums_count in_msg num
-        s0 s3 XCHG2	//  l in_msg nums_count num nums
-        8 STU	//  l in_msg nums_count nums
-        SWAP	//  l in_msg nums nums_count
-        INC	//  l in_msg nums nums_count
-      }>ELSE<{	//  l nums nums_count char in_msg
-        s0 s4 XCHG	//  in_msg nums nums_count char l
+          s0 s2 XCHG	//  in_msg nums nums_count order num l
+          UNCONS	//  in_msg nums nums_count order num n l
+          SWAP	//  in_msg nums nums_count order num l n
+          -48 ADDCONST	//  in_msg nums nums_count order num l _26
+          s3 PUSH	//  in_msg nums nums_count order num l _26 order
+          MUL	//  in_msg nums nums_count order num l _27
+          s1 s2 XCHG	//  in_msg nums nums_count order l num _27
+          ADD	//  in_msg nums nums_count order l num
+          s0 s2 XCHG	//  in_msg nums nums_count num l order
+          10 MULCONST	//  in_msg nums nums_count num l order
+          OVER	//  in_msg nums nums_count num l order l
+          ISNULL	//  in_msg nums nums_count num l order _31
+          s2 s3 XCHG	//  in_msg nums nums_count l num order _31
+        }>	//  in_msg nums nums_count l num order
+        DROP	//  in_msg nums nums_count l num
+        s0 s3 XCHG2	//  in_msg l nums_count num nums
+        8 STU	//  in_msg l nums_count nums
+        SWAP	//  in_msg l nums nums_count
+        INC	//  in_msg l nums nums_count
+      }>ELSE<{	//  in_msg nums nums_count l char
+        SWAP	//  in_msg nums nums_count char l
         CONS	//  in_msg nums nums_count l
-        3 -ROLL	//  l in_msg nums nums_count
+        -ROT	//  in_msg l nums nums_count
       }>
-      DUP	//  l in_msg nums nums_count nums_count
-      3 EQINT	//  l in_msg nums nums_count _39
-      s3 s4 XCHG
+      DUP	//  in_msg l nums nums_count nums_count
+      3 EQINT	//  in_msg l nums nums_count _39
       s1 s3 s0 XCHG3	//  in_msg nums nums_count l _39
     }>	//  in_msg nums nums_count l
     s2 s3 XCHG
@@ -282,8 +297,8 @@ PROGRAM{
     ADD	//  participants owner old_round comsa seqno _10
     s0 s5 XCHG2	//  seqno owner old_round comsa _10 participants
     pack_round CALLDICT	//  seqno owner old_round comsa round
-    s1 s3 s4 XCHG3
-    SWAP	//  round old_round comsa seqno owner
+    s1 s4 s4 XCHG3
+    s0 s3 XCHG	//  round old_round comsa seqno owner
     save_data CALLDICT
   }>
   withdraw_prize PROC:<{
@@ -295,9 +310,9 @@ PROGRAM{
     IFJMP:<{	//  s_addr query_id addr
       DROP	//  s_addr query_id
       4294967294 PUSHINT	//  s_addr query_id _7=4294967294
-      -1 PUSHINT	//  s_addr query_id _7=4294967294 _8=-1
-      0 PUSHINT	//  s_addr query_id _7=4294967294 _8=-1 _9=0
-      s2 s3 XCHG
+      SWAP
+      -1 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _7=4294967294 query_id _8=-1 _9=0 _10=64
       send_message_back CALLDICT
     }>	//  s_addr query_id addr
@@ -307,9 +322,9 @@ PROGRAM{
     IFJMP:<{	//  s_addr query_id addr round old_round comsa seqno owner
       6 BLKDROP	//  s_addr query_id
       4294967294 PUSHINT	//  s_addr query_id _19=4294967294
-      -1 PUSHINT	//  s_addr query_id _19=4294967294 _20=-1
-      0 PUSHINT	//  s_addr query_id _19=4294967294 _20=-1 _21=0
-      s2 s3 XCHG
+      SWAP
+      -1 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _19=4294967294 query_id _20=-1 _21=0 _22=64
       send_message_back CALLDICT
     }>	//  s_addr query_id addr round old_round comsa seqno owner
@@ -322,9 +337,9 @@ PROGRAM{
     IFNOTJMP:<{	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d ms
       10 BLKDROP	//  s_addr query_id
       4294967294 PUSHINT	//  s_addr query_id _35=4294967294
-      -1 PUSHINT	//  s_addr query_id _35=4294967294 _36=-1
-      0 PUSHINT	//  s_addr query_id _35=4294967294 _36=-1 _37=0
-      s2 s3 XCHG
+      SWAP
+      -1 PUSHINT
+      0 PUSHINT
       64 PUSHINT	//  s_addr _35=4294967294 query_id _36=-1 _37=0 _38=64
       send_message_back CALLDICT
     }>	//  s_addr query_id p3 round owner comsa seqno lucky_nums p1 p2 d ms
@@ -334,8 +349,8 @@ PROGRAM{
     s3 s10 s5 PU2XC	//  s_addr query_id p3 round owner comsa seqno m p1 p2 lucky_nums p1 p2 p3 d
     pack_old_round CALLDICT	//  s_addr query_id p3 round owner comsa seqno m p1 p2 old_round
     s4 s7 XCHG
-    s5 s7 s3 XCHG3
-    s0 s6 XCHG	//  s_addr query_id p3 p2 m p1 round old_round comsa seqno owner
+    s5 s1 s3 XCHG3
+    s7 s6 XCHG2	//  s_addr query_id p3 p2 m p1 round old_round comsa seqno owner
     save_data CALLDICT
     0 PUSHINT	//  s_addr query_id p3 p2 m p1 amount=0
     s2 PUSH	//  s_addr query_id p3 p2 m p1 amount=0 m
@@ -359,8 +374,9 @@ PROGRAM{
       NIP	//  s_addr query_id amount
     }>
     2147483651 PUSHINT	//  s_addr query_id amount _56=2147483651
-    -1 PUSHINT	//  s_addr query_id amount _56=2147483651 _57=-1
-    s3 s0 s3 XCHG3
+    s0 s2 XCHG
+    -1 PUSHINT
+    ROT
     64 PUSHINT	//  s_addr _56=2147483651 query_id _57=-1 amount _58=64
     send_message_back CALLDICT
   }>
@@ -374,8 +390,7 @@ PROGRAM{
       2DROP	//  round old_round
       0 PUSHINT	//  round old_round _6=0
     }>	//  round old_round prize_fund participants
-    s2 POP
-    s2 POP	//  prize_fund participants
+    2 2 BLKDROP2	//  prize_fund participants
     LTIME
     ADDRAND
     NEWDICT	//  prize_fund participants lucky_nums
@@ -393,9 +408,9 @@ PROGRAM{
       IF:<{	//  prize_fund participants i lucky_nums
         SWAP	//  prize_fund participants lucky_nums i
         INC	//  prize_fund participants lucky_nums i
-      }>ELSE<{
-        SWAP	//  prize_fund participants lucky_nums i
-      }>
+        SWAP	//  prize_fund participants i lucky_nums
+      }>	//  prize_fund participants i lucky_nums
+      SWAP	//  prize_fund participants lucky_nums i
     }>	//  prize_fund participants lucky_nums i
     DROP	//  prize_fund participants lucky_nums
     0 PUSHINT	//  prize_fund participants lucky_nums c1=0
@@ -406,8 +421,7 @@ PROGRAM{
       s6 PUSH
       8 PUSHPOW2	//  prize_fund participants lucky_nums c1 c2 c3 d i participants _35=256
       DICTUGETNEXT
-      NULLSWAPIFNOT
-      NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f
+      NULLSWAPIFNOT2	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f
       DUP	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f f
       IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d nums i f
         s0 s2 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i nums
@@ -422,20 +436,20 @@ PROGRAM{
         NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 _160 _161
         NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3 f1
         IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff=0 n2 n3
-          s2 POP	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 n2
-          1 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 n2 ff
-        }>ELSE<{
-          s0 s2 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 n2 ff
-        }>
+          1 PUSHINT
+          s3 POP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n2 n3
+        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n2 n3
         s1 s9 XCPU
-        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff n2 lucky_nums _61=8
+        8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 n2 lucky_nums _61=8
         DICTUGET
-        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff _162 _163
-        NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff f1
-        IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
+        NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 _162 _163
+        NIP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 f1
+        IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3
+          SWAP	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
           INC	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
-        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i n3 ff
-        s1 s8 XCPU
+          SWAP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3
+        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3
+        s8 PUSH
         8 PUSHINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff n3 lucky_nums _66=8
         DICTUGET
         NULLSWAPIFNOT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _164 _165
@@ -451,53 +465,43 @@ PROGRAM{
           3 PUSHINT	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _75=3
           NEWC	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _75=3 _76
           2 STU	//  prize_fund participants lucky_nums c1 c2 ff d f i c3 _78
-          SWAP
-          8 PUSHPOW2
-          s3 s5 s5 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _78 i d _79=256
+          s0 s2 s4 XCPUXC
+          8 PUSHPOW2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _78 i d _79=256
           DICTUSETB	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
-        }>ELSE<{
-          s0 s4 XCHG
-          s0 s3 XCHG	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
-        }>
-        s4 PUSH	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d ff
-        2 EQINT	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d _82
-        IF:<{	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
-          s0 s5 XCHG	//  prize_fund participants lucky_nums c1 d ff c3 f i c2
-          INC	//  prize_fund participants lucky_nums c1 d ff c3 f i c2
-          2 PUSHINT	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _86=2
-          NEWC	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _86=2 _87
-          2 STU	//  prize_fund participants lucky_nums c1 d ff c3 f i c2 _89
-          SWAP
-          8 PUSHPOW2
-          s3 s7 s7 PUXC2	//  prize_fund participants lucky_nums c1 c2 ff c3 f i _89 i d _90=256
-          DICTUSETB	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
-        }>	//  prize_fund participants lucky_nums c1 c2 ff c3 f i d
-        s0 s4 XCHG	//  prize_fund participants lucky_nums c1 c2 d c3 f i ff
-        1 EQINT	//  prize_fund participants lucky_nums c1 c2 d c3 f i _93
-        IF:<{	//  prize_fund participants lucky_nums c1 c2 d c3 f i
-          s0 s5 XCHG	//  prize_fund participants lucky_nums i c2 d c3 f c1
-          INC	//  prize_fund participants lucky_nums i c2 d c3 f c1
-          1 PUSHINT	//  prize_fund participants lucky_nums i c2 d c3 f c1 _97=1
-          NEWC	//  prize_fund participants lucky_nums i c2 d c3 f c1 _97=1 _98
-          2 STU	//  prize_fund participants lucky_nums i c2 d c3 f c1 _100
-          SWAP
-          8 PUSHPOW2
-          s7 s5 s5 PUXC2	//  prize_fund participants lucky_nums i c2 c1 c3 f _100 i d _101=256
-          DICTUSETB	//  prize_fund participants lucky_nums i c2 c1 c3 f d
-        }>ELSE<{
-          s0 s5 XCHG
-          s0 s3 XCHG	//  prize_fund participants lucky_nums i c2 c1 c3 f d
-        }>
+          s0 s3 XCHG
+          s0 s4 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
+        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
+        DUP	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff ff
+        2 EQINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff _82
+        IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
+          s0 s5 XCHG	//  prize_fund participants lucky_nums c1 ff c3 d f i c2
+          INC	//  prize_fund participants lucky_nums c1 ff c3 d f i c2
+          2 PUSHINT	//  prize_fund participants lucky_nums c1 ff c3 d f i c2 _86=2
+          NEWC	//  prize_fund participants lucky_nums c1 ff c3 d f i c2 _86=2 _87
+          2 STU	//  prize_fund participants lucky_nums c1 ff c3 d f i c2 _89
+          s0 s2 s4 XCPUXC
+          8 PUSHPOW2	//  prize_fund participants lucky_nums c1 ff c3 c2 f i _89 i d _90=256
+          DICTUSETB	//  prize_fund participants lucky_nums c1 ff c3 c2 f i d
+          s0 s3 XCHG
+          s0 s5 XCHG	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
+        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i ff
+        1 EQINT	//  prize_fund participants lucky_nums c1 c2 c3 d f i _93
+        IF:<{	//  prize_fund participants lucky_nums c1 c2 c3 d f i
+          s0 s5 XCHG	//  prize_fund participants lucky_nums i c2 c3 d f c1
+          INC	//  prize_fund participants lucky_nums i c2 c3 d f c1
+          1 PUSHINT	//  prize_fund participants lucky_nums i c2 c3 d f c1 _97=1
+          NEWC	//  prize_fund participants lucky_nums i c2 c3 d f c1 _97=1 _98
+          2 STU	//  prize_fund participants lucky_nums i c2 c3 d f c1 _100
+          s0 s6 s3 XCPUXC
+          8 PUSHPOW2	//  prize_fund participants lucky_nums i c2 c3 c1 f _100 i d _101=256
+          DICTUSETB	//  prize_fund participants lucky_nums i c2 c3 c1 f d
+          s0 s1 s5 XCHG3	//  prize_fund participants lucky_nums c1 c2 c3 d f i
+        }>	//  prize_fund participants lucky_nums c1 c2 c3 d f i
       }>ELSE<{
-        s1 s6 XCHG
-        s1 s4 XCHG
-        2SWAP
-        DROP	//  prize_fund participants lucky_nums i c2 c1 c3 f d
+        s2 POP	//  prize_fund participants lucky_nums c1 c2 c3 d f i
       }>
-      SWAP	//  prize_fund participants lucky_nums i c2 c1 c3 d f
-      NOT	//  prize_fund participants lucky_nums i c2 c1 c3 d _103
-      s3 s5 XCHG
-      s1 s3 s0 XCHG3	//  prize_fund participants lucky_nums c1 c2 c3 d i _103
+      SWAP	//  prize_fund participants lucky_nums c1 c2 c3 d i f
+      NOT	//  prize_fund participants lucky_nums c1 c2 c3 d i _103
     }>	//  prize_fund participants lucky_nums c1 c2 c3 d i
     DROP
     s5 POP	//  prize_fund d lucky_nums c1 c2 c3
@@ -528,38 +532,40 @@ PROGRAM{
       DIV	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 pf1 next_round_fund p3=0 p1
       s2 s3 XCHG2	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund pf1
       SUB	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund
+      SWAP	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 next_round_fund p3=0
     }>ELSE<{
-      s3 s9 s4 XCHG3
-      2DROP	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund
+      s4 POP
+      s8 POP	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 next_round_fund p3=0
     }>
-    s6 PUSH	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund c2
-    0 GTINT	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund _137
-    IF:<{	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 p3=0 next_round_fund
-      s7 POP	//  comsa d lucky_nums next_round_fund c2 c3 pf3 pf2 p1 p3=0
-      s2 s5 PUXC	//  comsa d lucky_nums next_round_fund p3=0 c3 pf3 pf2 p1 pf2 c2
-      DIV	//  comsa d lucky_nums next_round_fund p3=0 c3 pf3 pf2 p1 p2
-      s6 s2 XCHG2	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund pf2
-      SUB	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund
+    s6 PUSH	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 next_round_fund p3=0 c2
+    0 GTINT	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 next_round_fund p3=0 _137
+    IF:<{	//  comsa d lucky_nums p2=0 c2 c3 pf3 pf2 p1 next_round_fund p3=0
+      s7 POP	//  comsa d lucky_nums p3=0 c2 c3 pf3 pf2 p1 next_round_fund
+      s2 s5 PUXC	//  comsa d lucky_nums p3=0 next_round_fund c3 pf3 pf2 p1 pf2 c2
+      DIV	//  comsa d lucky_nums p3=0 next_round_fund c3 pf3 pf2 p1 p2
+      s5 s2 XCHG2	//  comsa d lucky_nums p3=0 p1 c3 pf3 p2 next_round_fund pf2
+      SUB	//  comsa d lucky_nums p3=0 p1 c3 pf3 p2 next_round_fund
+      s5 s4 XCHG2	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p3=0 p1
     }>ELSE<{
-      s7 s6 s0 XCHG3
-      s0 s1 s3 XCHG3
-      2DROP	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund
+      s3 POP
+      s5 POP	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p3=0 p1
     }>
-    s3 PUSH	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund c3
-    0 GTINT	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund _141
-    IF:<{	//  comsa d lucky_nums p1 p3=0 c3 pf3 p2 next_round_fund
-      s4 POP	//  comsa d lucky_nums p1 next_round_fund c3 pf3 p2
-      s1 s2 PUXC	//  comsa d lucky_nums p1 next_round_fund p2 pf3 pf3 c3
-      DIV	//  comsa d lucky_nums p1 next_round_fund p2 pf3 p3
-      s3 s3 XCHG2	//  comsa d lucky_nums p1 p3 p2 next_round_fund pf3
-      SUB	//  comsa d lucky_nums p1 p3 p2 next_round_fund
+    s3 PUSH	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p3=0 p1 c3
+    0 GTINT	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p3=0 p1 _141
+    IF:<{	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p3=0 p1
+      NIP	//  comsa d lucky_nums p2 next_round_fund c3 pf3 p1
+      s1 s2 PUXC	//  comsa d lucky_nums p2 next_round_fund p1 pf3 pf3 c3
+      DIV	//  comsa d lucky_nums p2 next_round_fund p1 pf3 p3
+      s3 s3 XCHG2	//  comsa d lucky_nums p2 p3 p1 next_round_fund pf3
+      SUB	//  comsa d lucky_nums p2 p3 p1 next_round_fund
+      -ROT	//  comsa d lucky_nums p2 next_round_fund p3 p1
     }>ELSE<{
-      2SWAP
-      2DROP	//  comsa d lucky_nums p1 p3 p2 next_round_fund
+      2 2 BLKDROP2	//  comsa d lucky_nums p2 next_round_fund p3 p1
     }>
-    NEWDICT	//  comsa d lucky_nums p1 p3 p2 next_round_fund _144
-    pack_round CALLDICT	//  comsa d lucky_nums p1 p3 p2 round
-    s2 s5 XCHG2	//  comsa round lucky_nums p1 p2 p3 d
+    NEWDICT	//  comsa d lucky_nums p2 next_round_fund p3 p1 _144
+    s1 s3 XCHG	//  comsa d lucky_nums p2 p1 p3 next_round_fund _144
+    pack_round CALLDICT	//  comsa d lucky_nums p2 p1 p3 round
+    s3 s1 s5 XCHG3	//  comsa round lucky_nums p1 p2 p3 d
     pack_old_round CALLDICT	//  comsa round old_round
     ROT	//  round old_round comsa
   }>
@@ -605,8 +611,7 @@ PROGRAM{
     OVER	//  msg_value s_addr op in_msg op
     2 EQINT	//  msg_value s_addr op in_msg _33
     IFJMP:<{	//  msg_value s_addr op in_msg
-      NIP
-      NIP	//  msg_value in_msg
+      2 1 BLKDROP2	//  msg_value in_msg
       ENDS
       sponsor_prize_fund CALLDICT
     }>	//  msg_value s_addr op in_msg
@@ -658,57 +663,39 @@ PROGRAM{
     34 THROWIFNOT
     ACCEPT
     s2 PUSH	//  comsa seqno owner cs op round old_round op
-    1 EQINT	//  comsa seqno owner cs op round old_round _37
+    2 EQINT	//  comsa seqno owner cs op round old_round _37
     IF:<{	//  comsa seqno owner cs op round old_round
-      s0 s3 XCHG	//  comsa seqno owner old_round op round cs
-      WHILE:<{
-        DUP	//  comsa seqno owner old_round op round cs cs
-        SREFS	//  comsa seqno owner old_round op round cs _40
-      }>DO<{	//  comsa seqno owner old_round op round cs
-        8 LDU	//  comsa seqno owner old_round op round mode cs
-        LDREF	//  comsa seqno owner old_round op round mode _45 cs
-        s0 s2 XCHG	//  comsa seqno owner old_round op round cs _45 mode
-        SENDRAWMSG
-      }>	//  comsa seqno owner old_round op round cs
-      DUP	//  comsa seqno owner old_round op round cs cs
+      s3 PUSH	//  comsa seqno owner cs op round old_round cs
       ENDS
-    }>ELSE<{
-      s0 s3 XCHG	//  comsa seqno owner old_round op round cs
-    }>
-    s2 PUSH	//  comsa seqno owner old_round op round cs op
-    2 EQINT	//  comsa seqno owner old_round op round cs _50
-    IF:<{	//  comsa seqno owner old_round op round cs
-      DUP	//  comsa seqno owner old_round op round cs cs
-      ENDS
-      s0 s3 XCHG	//  comsa seqno owner cs op round old_round
       conduct_round CALLDICT	//  comsa seqno owner cs op round old_round new_comsa
       s1 s7 XCHG	//  old_round seqno owner cs op round comsa new_comsa
       ADD	//  old_round seqno owner cs op round comsa
-    }>ELSE<{
-      s3 s6 XCHG
-      s0 s3 XCHG	//  old_round seqno owner cs op round comsa
-    }>
-    s0 s2 XCHG	//  old_round seqno owner cs comsa round op
-    3 EQINT	//  old_round seqno owner cs comsa round _56
-    IF:<{	//  old_round seqno owner cs comsa round
-      s0 s2 XCHG	//  old_round seqno owner round comsa cs
-      264 PUSHINT	//  old_round seqno owner round comsa cs _63
-      LDSLICEX	//  old_round seqno owner round comsa dest_addr_s cs
+      s0 s6 XCHG	//  comsa seqno owner cs op round old_round
+    }>	//  comsa seqno owner cs op round old_round
+    s0 s2 XCHG	//  comsa seqno owner cs old_round round op
+    3 EQINT	//  comsa seqno owner cs old_round round _43
+    IF:<{	//  comsa seqno owner cs old_round round
+      s0 s2 XCHG	//  comsa seqno owner round old_round cs
+      264 PUSHINT	//  comsa seqno owner round old_round cs _50
+      LDSLICEX	//  comsa seqno owner round old_round dest_addr_s cs
       ENDS
-      19 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=19
-      0 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=19 _67=0
-      -1 PUSHINT	//  old_round seqno owner round comsa dest_addr_s _66=19 _67=0 _68=-1
-      4 ROLL
-      2 PUSHINT	//  old_round seqno owner round dest_addr_s _66=19 _67=0 _68=-1 comsa _69=2
+      SWAP
+      19 PUSHINT
+      0 PUSHINT
+      -1 PUSHINT
+      ROT
+      s0 s3 XCHG
+      s0 s8 XCHG
+      2 PUSHINT	//  old_round seqno owner round dest_addr_s _53=19 _54=0 _55=-1 comsa _56=2
       send_message_back CALLDICT
       0 PUSHINT	//  old_round seqno owner round comsa=0
+      s0 s4 XCHG	//  comsa=0 seqno owner round old_round
     }>ELSE<{
-      s2 POP	//  old_round seqno owner round comsa
+      s2 POP	//  comsa seqno owner round old_round
     }>
-    s0 s3 XCHG	//  old_round comsa owner round seqno
-    INC	//  old_round comsa owner round _73
-    s1 s4 XCHG
-    s3 s0 s3 XCHG3	//  round old_round comsa _73 owner
+    s0 s3 XCHG	//  comsa old_round owner round seqno
+    INC	//  comsa old_round owner round _60
+    s4 s0 s4 XCHG3	//  round old_round comsa _60 owner
     save_data CALLDICT
   }>
   seqno PROC:<{
@@ -754,19 +741,16 @@ PROGRAM{
       s2 PUSH
       8 PUSHINT	//  lucky_nums res i lucky_nums _17=8
       DICTUGETNEXT
-      NULLSWAPIFNOT
-      NULLSWAPIFNOT	//  lucky_nums res _25 _24 _26
+      NULLSWAPIFNOT2	//  lucky_nums res _25 _24 _26
       s2 POP	//  lucky_nums res f i
       OVER	//  lucky_nums res f i f
       IF:<{	//  lucky_nums res f i
         s0 s2 PUXC	//  lucky_nums i f i res
         8 STU	//  lucky_nums i f res
-      }>ELSE<{
-        s0 s2 XCHG	//  lucky_nums i f res
-      }>
-      SWAP	//  lucky_nums i res f
-      NOT	//  lucky_nums i res _22
-      s1 s2 XCHG	//  lucky_nums res i _22
+        s0 s2 XCHG	//  lucky_nums res f i
+      }>	//  lucky_nums res f i
+      SWAP	//  lucky_nums res i f
+      NOT	//  lucky_nums res i _22
     }>	//  lucky_nums res i
     DROP
     NIP	//  res
@@ -829,8 +813,7 @@ PROGRAM{
       OVER	//  p3 m p2 m
       2 EQINT	//  p3 m p2 _33
       IFJMP:<{	//  p3 m p2
-        NIP
-        NIP	//  p2
+        2 1 BLKDROP2	//  p2
       }>	//  p3 m p2
       DROP	//  p3 m
       3 EQINT	//  p3 _35
