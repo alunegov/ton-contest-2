@@ -5,6 +5,7 @@
 
 <b false 1 i, // round
   false 1 i, // old_round
+  false 1 i, // old_winners
   0 Gram, // comsa
   0 32 u, // seqno
   "lottery.pk" load-generate-keypair constant lottery_pk B, // owner pubkey
@@ -19,257 +20,294 @@ b> constant storage
 0 , 0 , // actions msg_sents
 now , // unix_time
 now , now , 0 , // block_lt, trans_lt, rand_seed
-0 tuple 9223372036854775807 , dictnew , , // remaining balance
+0 tuple 30 Gram* , dictnew , , // remaining balance
 contract_address_full , dictnew , // contract_address, global_config
 1 tuple // wrap to another tuple
 constant c7
 
-// storage - 
+// mGram - nGram
+{ 1000 * } : mGram*
+// µGram - nGram
+{ 1000000 * } : µGram*
+
+// storage method_id - [results] storage
 {
-."    prize_fund" cr
-79045 code 2 roll c7 runvmctx
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-."r1: " .GR cr
+  code 2 roll c7 runvmctx
+  ."Exit code: " swap dup . cr abort"FAIL exit_code"
+  // ."Updated storage: " cr dup <s csr. cr
+} : run_method
+
+// storage method_id - [results]
+{
+  code 2 roll c7 runvmctx
+  drop // storage
+  ."Exit code: " dup . cr abort"FAIL exit_code"
+} : run_get_method
+
+// storage - seqno
+{
+  ."    seqno" cr
+  85143 run_get_method
+  ."r: " dup . cr
+} : seqno
+
+// storage - prize_fund
+{
+  ."    prize_fund" cr
+  79045 run_get_method
+  ."r: " dup .GR cr
 } : prize_fund
 
-// storage exp_prize_find - 
+{ dup null? { ."(null) " drop } { { 8 u@+ swap . } 3 times s> } cond } : .val_participants
+
+// storage - dict
 {
-."    expecting prize_fund " dup .GR cr
-79045 code 3 roll c7 runvmctx
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-."r1: " dup .GR cr = not abort"FAIL r1"
-} : check_prize_fund
+  ."    participants" cr
+  70745 run_get_method
+  ."r: " dup .dump cr
+  dup dup null? { drop } { 8 256 + { swap . ."-> " .val_participants ."; " true } idictforeach drop cr } cond
+} : participants
 
 // storage - 
 {
-."    lucky_nums" cr
-84929 code 2 roll c7 runvmctx
-// .s cr
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-."r1: " <s csr. cr
+  ."    lucky_nums" cr
+  84929 run_get_method
+  ."r: " .l cr
 } : lucky_nums
 
 // storage - 
 {
-."    winners" cr
-128887 code 2 roll c7 runvmctx
-// .s cr
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-dup null? { drop } { <s csr. } cond
-{ ."r: " .GR cr } 3 times  // p1 p2 p3
-} : winners
+  ."    prizes" cr
+  70622 run_get_method
+  ."r: " { .GR ." " } 3 times cr // p1 p2 p3
+} : prizes
 
-// storage addr - 
+// storage wc addr - prize
 {
-."    is_winner for " dup . cr
-118635 code 3 roll c7 runvmctx
-// .s cr
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-."r1: " .GR cr
+  ."    is_winner for " 2dup .addr cr
+  2 roll 118635 run_get_method
+  ."r: " dup .GR cr
 } : is_winner
 
-// storage - 
+// storage addr - prize
 {
-."    comsa" cr
-98949 code 2 roll c7 runvmctx
-drop  // storage
-."Exit code " dup . cr abort"FAIL exit_code"
-."r1: " .GR cr
+  ."    is_winner_s for " dup 3 u@+ swap drop 8 i@+ 256 u@+ s> .addr cr
+  1 roll 101330 run_get_method
+  ."r: " dup .GR cr
+} : is_winner_s
+
+// storage - comsa
+{
+  ."    comsa" cr
+  98949 run_get_method
+  ."r: " dup .GR cr
 } : comsa
 
-storage 0 Gram* check_prize_fund
+storage seqno 0 = not abort"FAIL r"
+storage prize_fund 0 = not abort"FAIL r"
+storage comsa 0 = not abort"FAIL r"
 
-."inc prize_fund" cr
+."    inc prize_fund" cr
 98 Gram* <b b{0000} s, b{100} s, lottery_addr addr, b> <b 2 32 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+storage recv_internal run_method =: storage
 
-storage 98 Gram* check_prize_fund
+storage prize_fund 98 Gram* = not abort"FAIL r"
+storage participants null? not abort"FAIL r"
 
-."buy ticket 0_p1" cr
+."    buy ticket 0_p1" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0xd 8 u, 0xc 8 u, 0x4f 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 1 256 u, b> <b 1 32 u, 0xd 8 u, 0xc 8 u, 0x4f 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 0_p2" cr
+."    buy ticket 0_p2" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0x7 8 u, 0x1 8 u, 0x2 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 2 256 u, b> <b 1 32 u, 0x7 8 u, 0x1 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
 
-storage 100 Gram* check_prize_fund
-
+storage prize_fund 100 Gram* = not abort"FAIL r"
+storage participants null? abort"FAIL r"
 storage lucky_nums
-storage winners
+storage prizes
 
-."conduct round" cr
+."    idle withdraw_prize 0_p2" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 2 256 u, b> <b 3 32 u, b> <s
+storage recv_internal run_method =: storage
+
+."    conduct round 0" cr
 // msg_seqno, valid_until, op
 <b 0 32 u, -1 32 i, 2 32 u, b>
 dup hashu lottery_pk ed25519_sign_uint
 <b swap B, swap <s s, b> <s
-recv_external code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+storage recv_external run_method =: storage
 
+// only works in debug non-random lucky_nums mode (0, 1, 2)
+false =: TEST
+
+storage seqno 1 = not abort"FAIL r"
+storage participants null? not abort"FAIL r"
 storage lucky_nums
-storage winners
-storage 1 is_winner
-storage 2 is_winner
+storage prizes
+storage 0 1 is_winner TEST { 0 = not abort"FAIL r" } { drop } cond
+storage 0 2 is_winner TEST { 22 Gram* = not abort"FAIL r" } { drop } cond
+storage <b b{100} s, 0 8 i, 2 256 u, b> <s is_winner_s TEST { 22 Gram* = not abort"FAIL r" } { drop } cond
 
-storage prize_fund
-
-."buy ticket 1_p1" cr
+."    withdraw_prize 0_p2" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0xd 8 u, 0xc 8 u, 0x4f 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 2 256 u, b> <b 3 32 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p2" cr
+storage prize_fund TEST { 75 Gram* = not abort"FAIL r" } { drop } cond
+
+// 0 halt
+
+."    buy ticket 1_p1" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0x1d 8 u, 0x1c 8 u, 0x4a 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 1 256 u, b> <b 1 32 u, 0xd 8 u, 0xc 8 u, 0x4f 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p3" cr
+."    buy ticket 1_p2" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 3 256 u, b> <b 1 32 u, 0x2d 8 u, 0x2c 8 u, 0x4b 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 2 256 u, b> <b 1 32 u, 0x1d 8 u, 0x1c 8 u, 0x4a 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p4" cr
+."    buy ticket 1_p3" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 4 256 u, b> <b 1 32 u, 0x3d 8 u, 0x3c 8 u, 0x4c 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 3 256 u, b> <b 1 32 u, 0x2d 8 u, 0x2c 8 u, 0x4b 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p5" cr
+."    buy ticket 1_p4" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 5 256 u, b> <b 1 32 u, 0x4d 8 u, 0x4c 8 u, 0x30 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 4 256 u, b> <b 1 32 u, 0x3d 8 u, 0x3c 8 u, 0x4c 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p6" cr
+."    buy ticket 1_p5" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 6 256 u, b> <b 1 32 u, 0x13 8 u, 0x14 8 u, 0x15 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 5 256 u, b> <b 1 32 u, 0x4d 8 u, 0x4c 8 u, 0x30 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 1_p7" cr
+."    buy ticket 1_p6" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 7 256 u, b> <b 1 32 u, 0x21 8 u, 0x22 8 u, 0x23 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 6 256 u, b> <b 1 32 u, 0x13 8 u, 0x14 8 u, 0x15 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."conduct round" cr
+."    buy ticket 1_p7" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 7 256 u, b> <b 1 32 u, 0x21 8 u, 0x22 8 u, 0x23 8 u, b> <s
+storage recv_internal run_method =: storage
+
+storage participants null? abort"FAIL r"
+
+."    conduct round 1" cr
 // msg_seqno, valid_until, op
 <b 1 32 u, -1 32 i, 2 32 u, b>
 dup hashu lottery_pk ed25519_sign_uint
 <b swap B, swap <s s, b> <s
-recv_external code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+storage recv_external run_method =: storage
 
+storage seqno 2 = not abort"FAIL r"
+storage participants null? not abort"FAIL r"
 storage lucky_nums
-storage winners
+storage prizes
 
-storage prize_fund
-storage comsa
+storage prize_fund TEST { 79540 µGram* = not abort"FAIL r" } { drop } cond
+storage comsa TEST { 5460 µGram* = not abort"FAIL r" } { drop } cond
 
-."buy ticket 2_p1" cr
+// 0 halt
+
+."    buy ticket 2_p1" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 1 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 2_p1 again" cr
+."    rejected buy ticket 2_p1 again" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 1 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 1 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 2_p2 same nums" cr
+."    rejected buy ticket 2_p2 same nums" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0x0 8 u, 0x2 8 u, 0x2 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 2 256 u, b> <b 1 32 u, 0x0 8 u, 0x2 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
 
-storage lucky_nums
-storage winners
-
-storage prize_fund
-storage comsa
-
-// check_prize_fund only works in debug non-random lucky_nums mode (0, 1, 2)
-// storage 80540000000 check_prize_fund
-
-."buy ticket 3_p2 with change" cr
+."    rejected buy ticket 2_p3 out-of-range nums" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-2 Gram* <b b{0000} s, b{100} s, 0 8 u, 2 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 3 256 u, b> <b 1 32 u, 0x0 8 u, 0x2 8 u, 0x64 8 u, b> <s
+storage recv_internal run_method =: storage
 
-."buy ticket 3_p3 from simple transfer with comment" cr
+."    buy ticket 2_p4 with change" cr
 // Grams as int, CommonMsgInfo$0 as cell, 
-1 Gram* <b b{0000} s, b{100} s, 0 8 u, 3 256 u, b> <b 0 32 u, "0 1 2" $, b> <s
-recv_internal code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+5 Gram* <b b{0000} s, b{100} s, 0 8 i, 4 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
 
-// storage 82540000000 check_prize_fund
-storage prize_fund
+."    buy ticket 2_p5 from simple transfer with comment" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 5 256 u, b> <b 0 32 u, "0 1 2" $, b> <s
+storage recv_internal run_method =: storage
 
-."conduct round" cr
+."    buy ticket 2_p6 from wc = -1" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, -1 8 i, 6 256 u, b> <b 1 32 u, 0x10 8 u, 0x11 8 u, 0x12 8 u, b> <s
+storage recv_internal run_method =: storage
+
+."    rejected buy ticket 2_p7 less than GR$2" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+1900 µGram* <b b{0000} s, b{100} s, 0 8 i, 1 256 u, b> <b 1 32 u, 0x0 8 u, 0x1 8 u, 0x2 8 u, b> <s
+storage recv_internal run_method =: storage
+
+// storage participants null? abort"FAIL r" // fails on 2_p6 in idictforeach
+storage prize_fund TEST { 83540 µGram* = not abort"FAIL r" } { drop } cond
+
+."    conduct round 2" cr
 // msg_seqno, valid_until, op
 <b 2 32 u, -1 32 i, 2 32 u, b>
 dup hashu lottery_pk ed25519_sign_uint
 <b swap B, swap <s s, b> <s
-recv_external code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+storage recv_external run_method =: storage
 
-// storage 30539800000 check_prize_fund
-storage prize_fund
-storage comsa
+storage seqno 3 = not abort"FAIL r"
+storage participants null? not abort"FAIL r"
+storage prize_fund TEST { 30909800 mGram* = not abort"FAIL r" } { drop } cond
+storage comsa TEST { 7966200 mGram* = not abort"FAIL r" } { drop } cond
 
-."conduct round with no participants - prolong round" cr
+."    withdraw_prize 2_p4" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 4 256 u, b> <b 3 32 u, b> <s
+storage recv_internal run_method =: storage
+
+."    withdraw_prize 2_p5 from simple transfer with empty comment" cr
+// Grams as int, CommonMsgInfo$0 as cell, 
+2 Gram* <b b{0000} s, b{100} s, 0 8 i, 5 256 u, b> <b 0 32 u, b> <s
+storage recv_internal run_method =: storage
+
+// 0 halt
+
+."    conduct round with no participants - prolong round" cr
 // msg_seqno, valid_until, op
 <b 3 32 u, -1 32 i, 2 32 u, b>
 dup hashu lottery_pk ed25519_sign_uint
 <b swap B, swap <s s, b> <s
-recv_external code storage c7 runvmctx
-."Updated storage: " cr dup =: storage <s csr. cr
-."Exit code " dup . cr abort"FAIL exit_code"
+storage recv_external run_method =: storage
 
-// storage 30539800000 check_prize_fund
-storage prize_fund
-storage comsa
+storage seqno 4 = not abort"FAIL r"
+storage prize_fund TEST { 30909800 mGram* = not abort"FAIL r" } { drop } cond
+storage comsa TEST { 7966200 mGram* = not abort"FAIL r" } { drop } cond
 
+."    withdraw commision" cr
+// msg_seqno, valid_until, op, dest_addr
+<b 4 32 u, -1 32 i, 3 32 u, b{100} s, 0 8 i, 14 256 u, b>
+dup hashu lottery_pk ed25519_sign_uint
+<b swap B, swap <s s, b> <s
+storage recv_external run_method =: storage
+
+storage seqno 5 = not abort"FAIL r"
+storage comsa 0 = not abort"FAIL r"
 
 cr
 
 lottery_addr .addr cr
 // lottery_addr 6 .Addr cr
 
-" 0123456789" =: comment
-comment simple-transfer-body
-<s csr.
+// " 0123456789" =: comment
+// comment simple-transfer-body
+// <s csr.
