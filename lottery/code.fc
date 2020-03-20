@@ -223,7 +223,8 @@ cell pack_old_round(cell lucky_nums, int prize1, int prize2, int prize3) {
     save_data(round, old_round, old_winners, comsa, seqno, owner);
 
     ;; return money and prize
-    raw_reserve(prize, 1);  ;; reserve all but prize = 1 ;; reserve (balance - prize) = +4 +8
+    ;; in mode = 1 only prize returned without remaining balance og inbound message
+    raw_reserve(prize, 12);  ;; reserve all but prize = 1 ;; reserve (balance - prize) = +4 +8
     send_message_back(addr_s, 0x80000003, query_id, -1, 0, 128);
 }
 
