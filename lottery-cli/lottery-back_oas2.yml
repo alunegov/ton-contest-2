@@ -1,0 +1,81 @@
+swagger: '2.0'
+info:
+  title: Lottery API
+  version: '1.0'
+host: localhost:8080
+schemes:
+  - http
+paths:
+  /current:
+    get:
+      tags:
+        - API
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/CurrentRound'
+  /prev:
+    get:
+      tags:
+        - API
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/PrevRound'
+  /is_winner/{addr}:
+    get:
+      tags:
+        - API
+      produces:
+        - application/json
+      parameters:
+        - $ref: '#/parameters/addrParam'
+      responses:
+        '200':
+          description: ''
+          schema:
+            $ref: '#/definitions/IsWinner'
+definitions:
+  CurrentRound:
+    type: object
+    properties:
+      prize_fund:
+        type: integer
+        format: int64
+      participants_count:
+        type: integer
+        format: int64
+  PrevRound:
+    type: object
+    properties:
+      lucky_nums:
+        type: array
+        items:
+          type: integer
+          format: int8
+      prizes:
+        type: array
+        items:
+          type: integer
+          format: int64
+  IsWinner:
+    type: object
+    properties:
+      prize:
+        type: integer
+        format: int64
+parameters:
+  addrParam:
+    name: addr
+    in: path
+    type: string
+    required: true
+securityDefinitions:
+  basicAuth:
+    type: basic
