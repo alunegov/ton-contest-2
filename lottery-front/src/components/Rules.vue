@@ -1,6 +1,6 @@
 <template lang="pug">
 #rules
-  b-container(fluid="md")
+  b-container(fluid="md" class="pb-4")
     b-row(class="pt-2")
       b-col
         h3 Rules
