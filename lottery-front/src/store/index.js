@@ -6,7 +6,7 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    API: 'http://localhost:8080',
+    API: process.env.VUE_APP_API,
     prize_fund: 0,
     participants_count: 0,
     prev_lucky_nums: [],

@@ -398,7 +398,7 @@ int main(int argc, char* argv[])
     restinio::run(
         restinio::on_this_thread<server_traits_t>()
             .port(8080)
-            .address("localhost")
+            .address("0.0.0.0")
             .request_handler(create_router(lottery))
     );
 
