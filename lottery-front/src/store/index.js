@@ -47,11 +47,11 @@ export default new Vuex.Store({
       const resp_lucky_nums = await axios.get(`${state.API}/lucky_nums`);
       const resp_prizes = await axios.get(`${state.API}/prizes`);
       commit('set_lucky_nums', resp_lucky_nums.data.lucky_nums);
-      commit('set_prizes', resp_prizes.data.prizes);
+      commit('set_prizes', [resp_prizes.data.p1, resp_prizes.data.p2, resp_prizes.data.p3]);
     },
     check_is_winner: async ({ commit, state }, addr) => {
       // TODO: sanitize addr?
-      const resp = await axios.get(`${state.API}/is_winner/${addr}`);
+      const resp = await axios.get(`${state.API}/is_winner`, { params: { "addr": addr } });
       commit('set_is_winner', { addr: addr, prize: resp.data.prize });
     },
   },

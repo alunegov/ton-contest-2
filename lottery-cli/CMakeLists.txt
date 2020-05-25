@@ -10,6 +10,8 @@ add_subdirectory(../_ext/ton ton)
 
 add_executable(${PROJECT_NAME}
     main.cpp
+    SpecEntry.cpp
+    SpecEntry.h
 )
 
 target_link_libraries(${PROJECT_NAME}

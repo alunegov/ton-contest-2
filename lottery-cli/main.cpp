@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <cassert>
 #include <cstdint>
 #include <sstream>
@@ -19,9 +20,13 @@
 #include "tonlib/TonlibCallback.h"
 #include "tonlib/TonlibClient.h"
 
+#include "SpecEntry.h"
+
 namespace tonlib_api = ton::tonlib_api;
 
 td::actor::Scheduler* g_scheduler_ptr{nullptr};
+
+using Spec = std::vector<TlSpecEntry*>;
 
 // aka Lottery smc
 class TonlibConsumer : public td::actor::Actor
@@ -40,129 +45,52 @@ public:
     {
     }
 
-    void get_prize_fund(td::Promise<std::int64_t> promise)
+    void get_(std::string method_name, Spec in_spec, const Spec& out_spec, td::Promise<std::string> promise)
     {
-      std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
+        using tonlib_api::make_object;
 
-      run_method("prize_fund", std::move(stack),
-          promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_prize_fund));
+        std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
+        for (const TlSpecEntry* se : in_spec) {
+            // TODO:
+            auto s0 = make_object<tonlib_api::tvm_stackEntryNumber>(make_object<tonlib_api::tvm_numberDecimal>(se->name()));
+            stack.push_back(std::move(s0));
+        }
+
+        run_method(std::move(method_name), std::move(stack),
+                   promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_, out_spec));
     }
 
-    void got_prize_fund(tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::int64_t> promise)
+    void got_(const Spec& out_spec, tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::string> promise)
     {
-      auto& entry = static_cast<tonlib_api::tvm_stackEntryNumber&>(*info->stack_[0]);
-      auto val = std::stoll(entry.number_->number_);
-      promise.set_value(val);
-    }
+        if (info->exit_code_ != 0) {
+            promise.set_error(td::Status::Error(1, "err"));
+            return;
+        }
 
-    struct Participant
-    {
-      std::string addr_;
-      std::array<std::uint8_t, 3> nums_;
-      Participant(std::string addr, std::array<std::uint8_t, 3> nums) : addr_{std::move(addr)}, nums_{std::move(nums)}
-      {}
-    };
+        std::vector<std::string> pre_out(out_spec.size());
 
-    void get_participants(td::Promise<std::vector<Participant>> promise)
-    {
-      std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
+        std::transform(out_spec.begin(), out_spec.end(), info->stack_.begin(), pre_out.begin(),
+                [](const TlSpecEntry* a, const tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>& b) {
+                    return a->process(*b);
+                }
+        );
 
-      run_method("participants", std::move(stack),
-          promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_participants));
-    }
+        std::stringstream ss;
+        ss << '{';
+        bool first{true};
+        for (const auto& s : pre_out) {
+            if (!first) {
+                ss << ',';
+            } else {
+                first = false;
+            }
 
-    void got_participants(tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::vector<Participant>> promise)
-    {
-      // TODO: empty dict - null()
-      auto& entry = static_cast<tonlib_api::tvm_stackEntryCell&>(*info->stack_[0]);
-      auto cell = vm::std_boc_deserialize(entry.cell_->bytes_);
-      auto dict = vm::Dictionary{cell.move_as_ok(), 8 + 256};
-      std::vector<Participant> val;
-      for (auto it : dict.range(false, false)) {
-        auto k = it.first.to_hex(8 + 256);
-        auto z = dict.key_as_integer(it.first, false);
-        auto v = it.second->clone();
-        auto n1 = static_cast<uint8_t>(v.fetch_ulong(8));
-        auto n2 = static_cast<uint8_t>(v.fetch_ulong(8));
-        auto n3 = static_cast<uint8_t>(v.fetch_ulong(8));
-        assert(v.empty());
-        val.emplace_back(k, std::array<std::uint8_t, 3>{n1, n2, n3});
-      }
-      promise.set_value(std::move(val));
-    }
+            ss << s;
+        }
+        ss << '}';
+        auto res = ss.str();
 
-    void get_lucky_nums(td::Promise<std::vector<std::uint8_t>> promise)
-    {
-      std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
-
-      run_method("lucky_nums", std::move(stack),
-          promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_lucky_nums));
-    }
-
-    void got_lucky_nums(tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::vector<std::uint8_t>> promise)
-    {
-      // TODO: empty tuple - nil
-      auto& entry = static_cast<tonlib_api::tvm_stackEntryList&>(*info->stack_[0]);
-      std::vector<std::uint8_t> val;
-      val.reserve(entry.list_->elements_.size());
-      for (auto& el : entry.list_->elements_) {
-        auto& elv = static_cast<tonlib_api::tvm_stackEntryNumber&>(*el);
-        val.push_back(std::stoul(elv.number_->number_));
-      }
-      promise.set_value(std::move(val));
-    }
-
-    void get_prizes(td::Promise<std::vector<std::int64_t>> promise)
-    {
-      std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
-
-      run_method("prizes", std::move(stack),
-          promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_prizes));
-    }
-
-    void got_prizes(tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::vector<std::int64_t>> promise)
-    {
-      std::vector<std::int64_t> val;
-      val.reserve(info->stack_.size());
-      for (auto& el : info->stack_) {
-        auto& elv = static_cast<tonlib_api::tvm_stackEntryNumber&>(*el);
-        val.push_back(std::stoll(elv.number_->number_));
-      }
-      promise.set_value(std::move(val));
-    }
-
-    void get_is_winner(std::string addr, td::Promise<std::int64_t> promise)
-    {
-      using tonlib_api::make_object;
-
-      block::StdAddress a;
-      if (!a.parse_addr(td::Slice{addr})) {
-        promise.set_error(td::Status::Error(1112, "qqq"));
-      }
-
-      std::vector<tonlib_api::object_ptr<tonlib_api::tvm_StackEntry>> stack;
-
-      auto s0 = make_object<tonlib_api::tvm_stackEntryNumber>(make_object<tonlib_api::tvm_numberDecimal>("0"/*a.workchain*/));
-      stack.push_back(std::move(s0));
-
-      auto num = td::RefInt256{true};
-      auto& x = num.unique_write();
-      x.parse_dec(addr.data(), addr.size());
-      auto s1 = make_object<tonlib_api::tvm_stackEntryNumber>(make_object<tonlib_api::tvm_numberDecimal>(dec_string(num)));
-      stack.push_back(std::move(s1));
-
-      run_method("is_winner", std::move(stack),
-              promise.send_closure(td::actor::actor_id(this), &TonlibConsumer::got_is_winner));
-    }
-
-    void got_is_winner(tonlib_api::object_ptr<tonlib_api::smc_runResult> info, td::Promise<std::int64_t> promise)
-    {
-      if (info->exit_code_ != 0) {
-        promise.set_error(td::Status::Error(1111, "www"));
-      }
-      auto& entry = static_cast<tonlib_api::tvm_stackEntryNumber&>(*info->stack_[0]);
-      auto val = std::stoll(entry.number_->number_);
-      promise.set_value(val);
+        promise.set_value(std::move(res));
     }
 
     void load_smc(td::Promise<tonlib_api::object_ptr<tonlib_api::smc_info>> promise)
@@ -284,12 +212,6 @@ private:
     }
 };
 
-std::ostream& operator<<(std::ostream& stream, TonlibConsumer::Participant participant) {
-  return stream << "{\"addr\":\"" + participant.addr_ << "\",\"nums\":["
-      << std::to_string(participant.nums_[0]) << ',' << std::to_string(participant.nums_[1]) << ','
-      << std::to_string(participant.nums_[2]) << "]}";
-}
-
 using router_t = restinio::router::express_router_t<>;
 
 template <typename RESP>
@@ -308,147 +230,109 @@ auto create_router(td::actor::ActorOwn<TonlibConsumer>& tonClient)
 
   auto router = std::make_unique<router_t>();
 
-  router->http_get("/prize_fund", [&](auto req, auto) {
-    g_scheduler_ptr->run_in_context_external([&] {
-      td::actor::send_closure(tonClient, &TonlibConsumer::get_prize_fund,
-          [req](td::Result<std::int64_t> res) {
-              if (res.is_error()) {
-                  init_resp(req->create_response(restinio::status_internal_server_error()))
+  auto register_route = [&tonClient, &router](std::string path, Spec in_spec, Spec out_spec) {
+      std::string args;
+      if (!in_spec.empty()) {
+          args = R"((\?.*)?)";
+      }
+
+      auto handler = [&tonClient, path, in_spec = std::move(in_spec), out_spec = std::move(out_spec)](auto req, auto params) {
+          Spec tmp_in_spec;
+          if (!in_spec.empty()) {
+              const auto qp = restinio::parse_query(req->header().query());
+              for (const TlSpecEntry *se : in_spec) {
+                  if (qp.has(se->name())) {
+                      auto p = qp[se->name()];
+
+                      // TODO: transfrom?
+                      block::StdAddress a;
+                      if (!a.parse_addr(td::Slice{p.data(), p.size()})) {
+                          return restinio::request_rejected();
+                      }
+                      tmp_in_spec.emplace_back(new TlSpecEntry_Number{std::to_string(a.workchain)});  // TODO: memleak
+                      auto x = td::bits_to_refint(a.addr.cbits(), a.addr.size(), false);
+                      tmp_in_spec.emplace_back(new TlSpecEntry_Number{dec_string(x)});  // TODO: memleak
+                  }
+              }
+          }
+
+          g_scheduler_ptr->run_in_context_external([&tonClient, path, req, tmp_in_spec = std::move(tmp_in_spec), &out_spec]() mutable {
+              auto closure = [req](td::Result<std::string> res) {
+                  if (res.is_error()) {
+                      init_resp(req->create_response(restinio::status_internal_server_error()))
+                              .done();
+                      return;
+                  }
+
+                  init_resp(req->create_response())
+                          .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
+                          .set_body(res.move_as_ok())
                           .done();
-                  return;
-              }
-              
-              auto b = fmt::format(R"({{"prize_fund":{}}})", res.ok());
+              };
 
-            init_resp(req->create_response())
-              .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
-              .set_body(b)
-              .done();
+              td::actor::send_closure(tonClient, &TonlibConsumer::get_, path, std::move(tmp_in_spec), out_spec, std::move(closure));
           });
-    });
 
-    return restinio::request_accepted();
-  });
+          return restinio::request_accepted();
+      };
 
-  router->http_get("/participants", [&](auto req, auto) {
-    g_scheduler_ptr->run_in_context_external([&] {
-      td::actor::send_closure(tonClient, &TonlibConsumer::get_participants,
-          [req](td::Result<std::vector<TonlibConsumer::Participant>> res) {
-              if (res.is_error()) {
-                  init_resp(req->create_response(restinio::status_internal_server_error()))
-                          .done();
-                  return;
-              }
-              
-              auto r = res.move_as_ok();
+      router->http_get("/" + path + args, std::move(handler));
+  };
 
-              std::stringstream ss;
-              ss << R"({"participants":[)";
-              for (size_t i = 0; i < r.size() - 1; ++i) {
-                ss << r[i] << ',';
-              }
-              ss << r[r.size() - 1];
-              ss << R"(]})";
+    {
+        Spec in_spec;
 
-              auto b = ss.str();
+        Spec out_spec;
+        out_spec.emplace_back(new TlSpecEntry_Number{"prize_fund"});  // TODO: memleak
 
-            init_resp(req->create_response())
-              .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
-              .set_body(b)
-              .done();
-          });
-    });
+        register_route("prize_fund", std::move(in_spec), std::move(out_spec));
+    }
 
-    return restinio::request_accepted();
-  });
+    {
+        Spec in_spec;
 
-  router->http_get("/lucky_nums", [&](auto req, auto) {
-    g_scheduler_ptr->run_in_context_external([&] {
-      td::actor::send_closure(tonClient, &TonlibConsumer::get_lucky_nums,
-          [req](td::Result<std::vector<std::uint8_t>> res) {
-              if (res.is_error()) {
-                  init_resp(req->create_response(restinio::status_internal_server_error()))
-                          .done();
-                  return;
-              }
+        Spec out_spec;
+        auto key_wc = new TvmSpecEntry_Int{"wc", 8};
+        auto key_addr = new TvmSpecEntry_Int256{"addr", 256, false};
+        auto key = new TvmSpecEntry_User{"addr", {key_wc, key_addr}};
+        auto num1 = new TvmSpecEntry_UInt{"n1", 8};
+        auto num2 = new TvmSpecEntry_UInt{"n2", 8};
+        auto num3 = new TvmSpecEntry_UInt{"n3", 8};
+        auto value = new TvmSpecEntry_User{"nums", {num1, num2, num3}};
+        out_spec.emplace_back(new TlSpecEntry_Dict{"participants", key, value});  // TODO: memleak
 
-              auto r = res.move_as_ok();
+        register_route("participants", std::move(in_spec), std::move(out_spec));
+    }
 
-              std::stringstream ss;
-              ss << R"({"lucky_nums":[)";
-              for (size_t i = 0; i < r.size() - 1; ++i) {
-                ss << std::to_string(r[i]) << ',';
-              }
-              ss << std::to_string(r[r.size() - 1]);
-              ss << R"(]})";
+    {
+        Spec in_spec;
 
-              auto b = ss.str();
+        Spec out_spec;
+        out_spec.emplace_back(new TlSpecEntry_List{"lucky_nums"});  // TODO: memleak
 
-            init_resp(req->create_response())
-              .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
-              .set_body(b)
-              .done();
-          });
-    });
+        register_route("lucky_nums", std::move(in_spec), std::move(out_spec));
+    }
 
-    return restinio::request_accepted();
-  });
+    {
+        Spec in_spec;
 
-  router->http_get("/prizes", [&](auto req, auto) {
-    g_scheduler_ptr->run_in_context_external([&] {
-      td::actor::send_closure(tonClient, &TonlibConsumer::get_prizes,
-          [req](td::Result<std::vector<std::int64_t>> res) {
-              if (res.is_error()) {
-                  init_resp(req->create_response(restinio::status_internal_server_error()))
-                          .done();
-                  return;
-              }
+        Spec out_spec;
+        out_spec.emplace_back(new TlSpecEntry_Number{"p1"});  // TODO: memleak
+        out_spec.emplace_back(new TlSpecEntry_Number{"p2"});  // TODO: memleak
+        out_spec.emplace_back(new TlSpecEntry_Number{"p3"});  // TODO: memleak
 
-              auto r = res.move_as_ok();
+        register_route("prizes", std::move(in_spec), std::move(out_spec));
+    }
 
-              std::stringstream ss;
-              ss << R"({"prizes":[)";
-              for (size_t i = 0; i < r.size() - 1; ++i) {
-                ss << r[i] << ',';
-              }
-              ss << r[r.size() - 1];
-              ss << R"(]})";
+    {
+        Spec in_spec;
+        in_spec.emplace_back(new TlSpecEntry_Number{"addr"});  // TODO: memleak
 
-              auto b = ss.str();
+        Spec out_spec;
+        out_spec.emplace_back(new TlSpecEntry_Number{"prize"});  // TODO: memleak
 
-            init_resp(req->create_response())
-              .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
-              .set_body(b)
-              .done();
-          });
-    });
-
-    return restinio::request_accepted();
-  });
-
-  router->http_get("/is_winner/:addr", [&](auto req, auto params) {
-    auto addr = restinio::cast_to<std::string>(params["addr"]);
-
-    g_scheduler_ptr->run_in_context_external([&] {
-      td::actor::send_closure(tonClient, &TonlibConsumer::get_is_winner, std::move(addr),
-          [req](td::Result<std::int64_t> res) {
-            if (res.is_error()) {
-                init_resp(req->create_response(restinio::status_internal_server_error()))
-                        .done();
-                return;
-            }
-
-            auto b = fmt::format(R"({{"prize":{}}})", res.ok());
-
-            init_resp(req->create_response())
-              .append_header(restinio::http_field::content_type, "text/json; charset=utf-8")
-              .set_body(b)
-              .done();
-          });
-    });
-
-    return restinio::request_accepted();
-  });
+        register_route("is_winner", std::move(in_spec), std::move(out_spec));
+    }
 
   /*router->non_matched_request_handler([](auto req) {
     req->create_response(restinio::status_not_found)
