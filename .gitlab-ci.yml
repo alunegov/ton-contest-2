@@ -12,4 +12,3 @@ pages: # the job must be named pages
   only:
     - master
     - develop
-    - feature/web

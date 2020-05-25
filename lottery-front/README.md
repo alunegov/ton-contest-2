@@ -1,24 +1,12 @@
-# tt
+# lottery-front
 
-## Project setup
+Provides static web page for lottery smc, with data fetched from [lottery-back](../lottery-cli/). Based on Vue.js.
+
+## dev
+
 ```
 npm install
-```
-
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
-
-### Compiles and minifies for production
-```
-npm run build
-```
-
-### Lints and fixes files
-```
+npm run serve  // develop
+npm run build  // production
 npm run lint
 ```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
