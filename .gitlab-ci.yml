@@ -1,5 +1,19 @@
+test:
+  image: node:12
+  stage: test
+  script:
+    - cd lottery-front
+    - npm ci
+    - npm run build
+    - mv dist ../test
+  artifacts:
+    paths:
+      - test
+  except:
+    - master
+
 pages: # the job must be named pages
-  image: node:latest
+  image: node:12
   stage: deploy
   script:
     - cd lottery-front
@@ -11,4 +25,3 @@ pages: # the job must be named pages
       - public # artifact path must be /public for GitLab Pages to pick it up
   only:
     - master
-    - develop
