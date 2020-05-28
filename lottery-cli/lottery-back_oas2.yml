@@ -6,7 +6,7 @@ host: localhost:8080
 schemes:
   - http
 paths:
-  /current:
+  /prize_fund:
     get:
       tags:
         - API
@@ -14,10 +14,10 @@ paths:
         - application/json
       responses:
         '200':
-          description: ''
+          description: 'Prize fund for the current round'
           schema:
-            $ref: '#/definitions/CurrentRound'
-  /prev:
+            $ref: '#/definitions/PrizeFund'
+  /participants:
     get:
       tags:
         - API
@@ -25,10 +25,32 @@ paths:
         - application/json
       responses:
         '200':
-          description: ''
+          description: 'List of participants for the current round'
           schema:
-            $ref: '#/definitions/PrevRound'
-  /is_winner/{addr}:
+            $ref: '#/definitions/Participants'
+  /lucky_nums:
+    get:
+      tags:
+        - API
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'Winning nums for the previous round'
+          schema:
+            $ref: '#/definitions/LuckyNums'
+  /prizes:
+    get:
+      tags:
+        - API
+      produces:
+        - application/json
+      responses:
+        '200':
+          description: 'Prizes for the previous round'
+          schema:
+            $ref: '#/definitions/Prizes'
+  /is_winner:
     get:
       tags:
         - API
@@ -38,32 +60,66 @@ paths:
         - $ref: '#/parameters/addrParam'
       responses:
         '200':
-          description: ''
+          description: 'Prize for the addr for all previuos rounds'
           schema:
             $ref: '#/definitions/IsWinner'
 definitions:
-  CurrentRound:
+  PrizeFund:
     type: object
     properties:
       prize_fund:
         type: integer
         format: int64
-      participants_count:
-        type: integer
-        format: int64
-  PrevRound:
+  Participants:
+    type: object
+    properties:
+      participants:
+        type: array
+        items:
+          $ref: '#/definitions/Participant'
+  Participant:
+    type: object
+    properties:
+      addr:
+        type: object
+        properties:
+          wc:
+            type: integer
+            format: int8
+          addr:
+            type: string
+      nums:
+        type: object
+        properties:
+          n1:
+            type: integer
+            format: uint8
+          n2:
+            type: integer
+            format: uint8
+          n3:
+            type: integer
+            format: uint8
+  LuckyNums:
     type: object
     properties:
       lucky_nums:
         type: array
         items:
           type: integer
-          format: int8
-      prizes:
-        type: array
-        items:
-          type: integer
-          format: int64
+          format: uint8
+  Prizes:
+    type: object
+    properties:
+      p1:
+        type: integer
+        format: int64
+      p2:
+        type: integer
+        format: int64
+      p3:
+        type: integer
+        format: int64
   IsWinner:
     type: object
     properties:
@@ -73,9 +129,6 @@ definitions:
 parameters:
   addrParam:
     name: addr
-    in: path
+    in: query
     type: string
     required: true
-securityDefinitions:
-  basicAuth:
-    type: basic
