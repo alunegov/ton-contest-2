@@ -2,7 +2,7 @@ test:
   image: node:12
   stage: test
   script:
-    - cd lottery-front
+    - cd front
     - npm ci
     - npm run build
     - mv dist ../test
@@ -16,7 +16,7 @@ pages: # the job must be named pages
   image: node:12
   stage: deploy
   script:
-    - cd lottery-front
+    - cd front
     - npm ci
     - npm run build
     - mv dist ../public # rename the dist folder (result of npm run build)

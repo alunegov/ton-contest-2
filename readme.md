@@ -8,10 +8,10 @@ The bonus task in Stage 2 was to fix all bugs and issues discovered by the judge
 
 ## Project structure
 
-- lottery - smc
-- lottery-cli - web backend
-- lottery-front - web frontend
-- lottery_algo_test - prize distribution algorithm test
+- **algo_test** - prize distribution algorithm test
+- **back** - web backend
+- **front** - web frontend
+- **smc** - smc and helper scripts
 
 ## Lottery "3 of 13" smart-contract
 
@@ -54,6 +54,7 @@ Smc get-methods:
 ## dev
 
 ```sh
+cd smc
 func -PSR -ocode.fif $FUNCPATH/stdlib.fc code.fc  // compile smc
 fift -s <script>.fif                              // run scripts
 fift -s lottery-test.fif                          // run tests

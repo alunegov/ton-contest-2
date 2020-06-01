@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.1 FATAL_ERROR)
 
-project(lottery-cli LANGUAGES CXX)
+project(lottery-back LANGUAGES CXX)
 
 find_package(unofficial-http-parser CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
