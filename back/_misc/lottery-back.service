@@ -1,5 +1,5 @@
 [Unit]
-Description=Lottery SMC service
+Description=Lottery SMC back service
 After=network.target
 
 [Service]

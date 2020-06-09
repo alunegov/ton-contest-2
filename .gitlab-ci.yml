@@ -1,27 +1,93 @@
-test:
+back_build:
+  image: gcc:7
+  stage: build
+  script:
+    - cd back
+    - mkdir build
+    - cmake -B build -D CMAKE_TOOLCHAIN_FILE=~/vcpkg/scripts/buildsystems/vcpkg.cmake .
+    - cmake --build build --target lottery-back --config Release
+  artifacts:
+    paths:
+      - back/build/lottery-back
+  when: manual
+
+front_build:
   image: node:12
-  stage: test
+  stage: build
   script:
     - cd front
     - npm ci
     - npm run build
-    - mv dist ../test
   artifacts:
     paths:
-      - test
-  except:
-    - master
+      - front/dist/
 
-pages: # the job must be named pages
+bot_build:
+  image: golang:1.14
+  stage: build
+  script:
+    - cd bot
+    - GOOS=linux GOARCH=amd64 go build
+  artifacts:
+    paths:
+      - bot/bot
+
+bot_test:
+  image: golang:1.14
+  stage: test
+  needs:
+    - job: "bot_build"
+      artifacts: false
+  script:
+    - cd bot
+    - go test -v -cover ./...
+  coverage: '/^coverage: (\d+(?:\.\d+)?)%/'
+
+bot_lint:
+  image: registry.gitlab.com/gitlab-org/gitlab-build-images:golangci-lint-alpine
+  stage: test
+  needs:
+    - job: "bot_build"
+      artifacts: false
+  script:
+    - cd bot
+    # Use default .golangci.yml file from the image if one is not present in the project root.
+    - '[ -e .golangci.yml ] || cp /golangci/.golangci.yml .'
+    # Write the code coverage report to gl-code-quality-report.json
+    # and print linting issues to stdout in the format: path/to/file:line description
+    - golangci-lint run --out-format code-climate | tee gl-code-quality-report.json | jq -r '.[] | "\(.location.path):\(.location.lines.begin) \(.description)"'
+  artifacts:
+    reports:
+      codequality: bot/gl-code-quality-report.json
+    paths:
+      - bot/gl-code-quality-report.json
+  allow_failure: true
+
+pages: # the job must be named pages and artifact path must be public/ to trigger GitLab Pages
   image: node:12
   stage: deploy
+  needs: ["front_build"]
   script:
-    - cd front
-    - npm ci
-    - npm run build
-    - mv dist ../public # rename the dist folder (result of npm run build)
+    - mv front/dist/ public/  # rename the dist folder (result of npm run build)
   artifacts:
     paths:
-      - public # artifact path must be /public for GitLab Pages to pick it up
+      - public/
   only:
     - master
+
+.deploy_front:
+  image: node:12
+  stage: deploy
+  needs: ["front_build"]
+  script:
+    - mv front/dist/ public/  # rename the dist folder (result of npm run build)
+  artifacts:
+    paths:
+      - public/
+
+.deploy_back:
+  stage: deploy
+  needs: ["bot_build"]
+  script:
+    - uname -a
+    - file bot/bot

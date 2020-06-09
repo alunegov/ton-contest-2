@@ -1,0 +1,14 @@
+[Unit]
+Description=Lottery SMC bot service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=3
+User=ubuntu
+ExecStart=/home/ubuntu/lottery/bot -bot_token=${BOT_TOKEN} -api_endpoint=http://localhost:8080
+EnvironmentFile=/home/ubuntu/lottery/bot_env
+
+[Install]
+WantedBy=multi-user.target

@@ -9,9 +9,10 @@ The bonus task in Stage 2 was to fix all bugs and issues discovered by the judge
 ## Project structure
 
 - **algo_test** - prize distribution algorithm test
-- **back** - web backend
+- **back** - web and bot backend
+- **bot** - Telegram bot
 - **front** - web frontend
-- **smc** - smc and helper scripts
+- **smc** - smc code and helper scripts
 
 ## Lottery "3 of 13" smart-contract
 
