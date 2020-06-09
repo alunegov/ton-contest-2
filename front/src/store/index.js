@@ -4,6 +4,10 @@ import axios from 'axios';
 
 Vue.use(Vuex);
 
+function to_grams(nanograms) {
+  return nanograms / 1000000000.0
+}
+
 export default new Vuex.Store({
   state: {
     API: process.env.VUE_APP_API,
@@ -40,18 +44,18 @@ export default new Vuex.Store({
     load_current_round: async ({ commit, state }) => {
       const resp_prize_fund = await axios.get(`${state.API}/prize_fund`);
       const resp_participants = await axios.get(`${state.API}/participants`);
-      commit('set_prize_fund', resp_prize_fund.data.prize_fund);
+      commit('set_prize_fund', to_grams(resp_prize_fund.data.prize_fund));
       commit('set_participants_count', resp_participants.data.participants.length);
     },
     load_prev_round: async ({ commit, state }) => {
       const resp_lucky_nums = await axios.get(`${state.API}/lucky_nums`);
       const resp_prizes = await axios.get(`${state.API}/prizes`);
       commit('set_lucky_nums', resp_lucky_nums.data.lucky_nums);
-      commit('set_prizes', [resp_prizes.data.p1, resp_prizes.data.p2, resp_prizes.data.p3]);
+      commit('set_prizes', [to_grams(resp_prizes.data.p1), to_grams(resp_prizes.data.p2), to_grams(resp_prizes.data.p3)]);
     },
     check_is_winner: async ({ commit, state }, addr) => {
       const resp = await axios.get(`${state.API}/is_winner?addr=${encodeURIComponent(addr)}`);
-      commit('set_is_winner', { addr: addr, prize: resp.data.prize });
+      commit('set_is_winner', { addr: addr, prize: to_grams(resp.data.prize) });
     },
   },
 
