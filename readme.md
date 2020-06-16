@@ -91,4 +91,8 @@ Total: EUR 0
 
 # Post contest era
 
-Lottery web page are availiable [here](http://alunegov.gitlab.io/ton-contest-2/).
+Lottery's web page are availiable [here](http://alunegov.gitlab.io/ton-contest-2/).
+
+Lottery's Telegram bot are availiable as `@TonLottery3of13Bot`.
+ 
+Helper [script](deploy.cmd) for deploying back and bot to VPS using scp and ssh.
